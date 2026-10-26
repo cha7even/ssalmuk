@@ -7,6 +7,37 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDK 추가 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // TODO: 본인의 Firebase 설정값으로 변경해주세요!
+    const firebaseConfig = {
+  apiKey: "AIzaSyDnKOnOEjoZOOJpK2T2mpyRmJr5s2Kkdmo",
+  authDomain: "ssalmuk-85f02.firebaseapp.com",
+  projectId: "ssalmuk-85f02",
+  storageBucket: "ssalmuk-85f02.firebasestorage.app",
+  messagingSenderId: "532509805583",
+  appId: "1:532509805583:web:330851850017d5b0b4a77a",
+  measurementId: "G-BE9RM11SZW"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 전역으로 내보내기
+    window.db = db;
+    window.appCollection = collection(db, "ssalmuk_plans");
+    window.FirebaseSDK = { getDocs, setDoc, doc, deleteDoc };
+    
+    // 앱 시작 시 데이터 로드 트리거
+    if (window.initAppAfterFirebase) {
+      window.initAppAfterFirebase();
+    }
+  </script>
+
   <script>
     tailwind.config = {
       theme: {
@@ -442,79 +473,113 @@
     let currentSelectedOptionIdx = 0;
     let currentSelectedMonth = 10;
 
-    // 복구 데이터 원본
-    const defaultData = [
+    // 백업 메모장에 있던 초기 데이터 (DB가 비어있을 때 자동 등록됨)
+    const initialBackupData = [
       {
-        id: "plan-1792655269320",
-        carrier: "U+모바일",
-        title: "22GB 0원",
-        startDate: "2026-10-15",
-        eventEndDate: "2026-10-26",
-        activationDate: "2026-10-15",
-        code: "해피할로윈",
-        eventUrl: "",
-        options: [
-          { name: "7G+ 통화기본", price: 17500 }
+        "id": "plan-1793018583565",
+        "carrier": "KT M모바일",
+        "code": "M",
+        "title": "자급제 키즈",
+        "startDate": "2026-10-16",
+        "eventEndDate": "2026-10-31",
+        "activationDate": "2026-10-28",
+        "eventUrl": "",
+        "options": [{"name": "키즈안심8GB+", "price": 10900}],
+        "gifts": [
+          {"name": "자급제", "cond": "", "val": 30000, "month": 3, "endMonth": 10, "isMonthly": true},
+          {"name": "이벤트코드 M", "cond": "", "val": 15000, "month": 3, "endMonth": 10, "isMonthly": true},
+          {"name": "친구초대", "cond": "", "val": 5000, "month": 3, "endMonth": 12, "isMonthly": true},
+          {"name": "바로배송유심", "cond": "", "val": 10000, "month": 5, "endMonth": 5, "isMonthly": false},
+          {"name": "바로배송유심", "cond": "", "val": 10000, "month": 8, "endMonth": 8, "isMonthly": false}
         ],
-        gifts: [
-          { name: "네이버페이", cond: "매월20일", val: 25000, month: 3, endMonth: 8, isMonthly: true },
-          { name: "윌10개", cond: "매월16일경", val: 7800, month: 2, endMonth: 24, isMonthly: true }
-        ],
-        notices: []
+        "notices": []
       },
       {
-        id: "plan-galaxy",
-        carrier: "KT M모바일",
-        title: "[갤럭시자급제] 매월 3만원x8개월, 10월 최대 45만원!",
-        startDate: "2026-10-16",
-        eventEndDate: "2026-10-31",
-        activationDate: "2026-10-16",
-        code: "M",
-        eventUrl: "https://www.ktmmobile.co.kr",
-        options: [
-          { name: "모두다 맘껏 7GB+(PAY쿠폰 5000P)", price: 15400 },
-          { name: "모두다 맘껏 11GB+일2GB", price: 33000 }
+        "id": "plan-1793018349490",
+        "carrier": "KT M모바일",
+        "code": "M",
+        "title": "아이폰 갤럭시 자급제",
+        "startDate": "2026-10-16",
+        "eventEndDate": "2026-10-31",
+        "activationDate": "2026-10-28",
+        "eventUrl": "https://www.ktmmobile.com/event/eventDetail.do?ntcartSeq=1856&sbstCtg=E&pageNo=1",
+        "options": [{"name": "모두다맘껏7GB+(Pay5000P)", "price": 18500}],
+        "gifts": [
+          {"name": "자급제", "cond": "매월 말일", "val": 30000, "month": 3, "endMonth": 10, "isMonthly": true},
+          {"name": "이벤트코드 M", "cond": "매월 말일", "val": 20000, "month": 3, "endMonth": 10, "isMonthly": true},
+          {"name": "친구초대", "cond": "매월 말일", "val": 5000, "month": 3, "endMonth": 8, "isMonthly": true},
+          {"name": "바로배송유심", "cond": "네이버페이", "val": 10000, "month": 5, "endMonth": 5, "isMonthly": false},
+          {"name": "바로배송유심", "cond": "네이버페이", "val": 10000, "month": 8, "endMonth": 8, "isMonthly": false},
+          {"name": "네이버페이", "cond": "", "val": 5000, "month": 2, "endMonth": 25, "isMonthly": true}
         ],
-        gifts: [
-          { name: "직교환권/PAY쿠폰 1~8월", cond: "매월 30,000원 쿠폰 지급 (1~8개월차)", val: 30000, month: 1, endMonth: 8, isMonthly: true },
-          { name: "M스마트 스토어 쿠폰", cond: "개통 익월 말 지급 (2개월차 단발)", val: 50000, month: 2, endMonth: 2, isMonthly: false },
-          { name: "이마트 모바일상품권", cond: "4개월차 유지 시 지급 (4개월차 단발)", val: 32532, month: 4, endMonth: 4, isMonthly: false }
+        "notices": []
+      },
+      {
+        "id": "plan-1792655269320",
+        "carrier": "U+모바일",
+        "code": "해피할로윈",
+        "title": "22GB 0원",
+        "startDate": "2026-10-15",
+        "eventEndDate": "2026-10-26",
+        "activationDate": "2026-10-15",
+        "eventUrl": "",
+        "options": [{"name": "7G+ 통화기본", "price": 17500}],
+        "gifts": [
+          {"name": "네이버페이", "cond": "매월20일", "val": 25000, "month": 3, "endMonth": 8, "isMonthly": true},
+          {"name": "윌10개", "cond": "매월16일경", "val": 7800, "month": 2, "endMonth": 24, "isMonthly": true}
         ],
-        notices: [
-          "자급제 단말기 등록 고객 대상 전용 프로모션입니다.",
-          "M포인트 및 모바일 쿠폰은 수신일로부터 유효기간 내에 사용하셔야 합니다.",
-          "중도 해지 시 미지급된 회차의 사은품은 추가 지급되지 않습니다."
-        ]
+        "notices": []
       }
     ];
 
-    window.onload = function() {
-      loadStorage();
+    window.initAppAfterFirebase = async function() {
+      await loadStorage();
       renderMainList();
     };
 
-    function loadStorage() {
-      const saved = localStorage.getItem("ssalmuk_plans");
-      if (saved) {
-        try { 
-          const parsed = JSON.parse(saved);
-          const sanitized = sanitizePlansArray(parsed);
-          if (sanitized && sanitized.length > 0) {
-            plansData = sanitized;
-          } else {
-            plansData = JSON.parse(JSON.stringify(defaultData));
-          }
-        } catch(e) { 
-          plansData = JSON.parse(JSON.stringify(defaultData)); 
+    // Firebase 연동 데이터 로드 함수
+    async function loadStorage() {
+      try {
+        if (!window.db || !window.appCollection || !window.FirebaseSDK) {
+          // Firebase가 아직 로드 안 된 경우 로컬 데이터 사용
+          plansData = initialBackupData;
+          return;
         }
-      } else {
-        plansData = JSON.parse(JSON.stringify(defaultData));
-        saveStorage();
+
+        const querySnapshot = await window.FirebaseSDK.getDocs(window.appCollection);
+        const loadedPlans = [];
+        querySnapshot.forEach((docSnap) => {
+          loadedPlans.push(docSnap.data());
+        });
+
+        if (loadedPlans.length > 0) {
+          plansData = loadedPlans;
+        } else {
+          // DB가 완전히 비어있다면 백업 데이터(initialBackupData)를 자동으로 DB에 밀어넣음
+          for (const plan of initialBackupData) {
+            await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, "ssalmuk_plans", plan.id), plan);
+          }
+          plansData = initialBackupData;
+        }
+      } catch (e) {
+        console.error("Firebase 로드 실패, 로컬 데이터 사용:", e);
+        plansData = initialBackupData;
       }
     }
 
-    function saveStorage() {
-      localStorage.setItem("ssalmuk_plans", JSON.stringify(plansData));
+    // Firebase에 데이터 저장/수정 함수
+    async function saveStorage() {
+      try {
+        if (!window.db || !window.FirebaseSDK) return;
+        
+        // 현재 plansData에 있는 모든 항목을 Firestore에 동기화 저장
+        for (const plan of plansData) {
+          await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, "ssalmuk_plans", plan.id), plan);
+        }
+      } catch (e) {
+        console.error("Firebase 저장 중 오류:", e);
+        alert("데이터 저장 중 오류가 발생했습니다.");
+      }
     }
 
     function exportDataHTML() {
@@ -652,7 +717,7 @@ ${jsonString}
       event.target.value = "";
     }
 
-    function processImportedText(text) {
+    async function processImportedText(text) {
       try {
         if (text.charCodeAt(0) === 0xFEFF) text = text.substr(1);
 
@@ -684,20 +749,16 @@ ${jsonString}
 
         let sanitizedList = sanitizePlansArray(parsedObj);
 
-        if (!sanitizedList || sanitizedList.length === 0) {
-          sanitizedList = fallbackTextImportParser(text);
-        }
-
         if (sanitizedList && sanitizedList.length > 0) {
           if (confirm(`총 ${sanitizedList.length}개의 요금제 데이터를 읽어왔습니다. 복원하시겠습니까?`)) {
             plansData = sanitizedList;
-            saveStorage();
+            await saveStorage();
             renderMainList();
             
             if (!document.getElementById("detailScreen").classList.contains("hidden") && currentPlanId) {
               showDetailScreen(currentPlanId);
             }
-            alert("요금제 데이터가 성공적으로 복원되었습니다!");
+            alert("요금제 데이터가 성공적으로 복원 및 DB에 동기화되었습니다!");
           }
         } else {
           alert("유효한 요금제 데이터를 찾을 수 없습니다.");
@@ -709,21 +770,7 @@ ${jsonString}
 
     function sanitizePlansArray(rawInput) {
       if (!rawInput) return [];
-      
-      let candidateList = [];
-
-      if (Array.isArray(rawInput)) {
-        candidateList = rawInput;
-      } else if (typeof rawInput === 'object' && rawInput !== null) {
-        if (Array.isArray(rawInput.plans)) candidateList = rawInput.plans;
-        else if (Array.isArray(rawInput.data)) candidateList = rawInput.data;
-        else if (Array.isArray(rawInput.items)) candidateList = rawInput.items;
-        else if (Array.isArray(rawInput.list)) candidateList = rawInput.list;
-        else candidateList = [rawInput];
-      } else {
-        return [];
-      }
-
+      let candidateList = Array.isArray(rawInput) ? rawInput : [rawInput];
       const result = [];
 
       candidateList.forEach((item, idx) => {
@@ -731,105 +778,42 @@ ${jsonString}
 
         let opts = [];
         if (Array.isArray(item.options) && item.options.length > 0) {
-          opts = item.options.map(o => {
-            if (typeof o === 'string') return { name: o, price: 0 };
-            return {
-              name: String(o.name || o.title || o.optionName || o.planName || o.요금제명 || o.요금제 || '기본 요금제'),
-              price: Number(String(o.price !== undefined ? o.price : (o.fee || o.optionPrice || o.priceVal || o.월요금 || o.요금 || 0)).replace(/[^0-9]/g, '')) || 0
-            };
-          });
+          opts = item.options.map(o => ({
+            name: String(o.name || '기본 요금제'),
+            price: Number(String(o.price || 0).replace(/[^0-9]/g, '')) || 0
+          }));
         } else {
-          const optName = String(item.optionName || item.planName || item.name || item.title || item.요금제명 || item.요금제 || '기본 요금제');
-          const optPrice = Number(String(item.optionPrice || item.price || item.fee || item.월요금 || item.요금 || 0).replace(/[^0-9]/g, '')) || 0;
-          opts = [{ name: optName, price: optPrice }];
+          opts = [{ name: '기본 요금제', price: 0 }];
         }
 
         let gifts = [];
         if (Array.isArray(item.gifts)) {
-          gifts = item.gifts.map(g => {
-            if (typeof g === 'string') return { name: g, cond: '', val: 0, month: 1, endMonth: 1, isMonthly: false };
-            const m = Number(g.month || g.startMonth || g.시작월 || 1);
-            const em = Number(g.endMonth || g.month || g.startMonth || g.종료월 || m);
-            return {
-              name: String(g.name || g.title || g.giftName || g.혜택명 || g.사은품명 || g.사은품 || '사은품'),
-              cond: String(g.cond || g.condition || g.desc || g.지급조건 || ''),
-              val: Number(String(g.val !== undefined ? g.val : (g.value || g.price || g.giftValue || g.가치 || g.금액 || 0)).replace(/[^0-9]/g, '')) || 0,
-              month: m,
-              endMonth: em,
-              isMonthly: Boolean(g.isMonthly || g.매월지급 || (em > m))
-            };
-          });
-        } else if (item.giftName || item.giftValue || item.사은품명 || item.사은품) {
-          const m = Number(item.startMonth || item.month || item.시작월 || 1);
-          const em = Number(item.endMonth || item.startMonth || item.month || item.종료월 || m);
-          gifts = [{
-            name: String(item.giftName || item.giftTitle || item.사은품명 || item.사은품 || '사은품'),
-            cond: String(item.giftCond || item.condition || item.지급조건 || '개통 및 조건 충족 시 지급'),
-            val: Number(String(item.giftValue || item.giftVal || item.사은품가치 || 0).replace(/[^0-9]/g, '')) || 0,
-            month: m,
-            endMonth: em,
-            isMonthly: Boolean(em > m)
-          }];
+          gifts = item.gifts.map(g => ({
+            name: String(g.name || '사은품'),
+            cond: String(g.cond || ''),
+            val: Number(String(g.val || 0).replace(/[^0-9]/g, '')) || 0,
+            month: Number(g.month || 1),
+            endMonth: Number(g.endMonth || 1),
+            isMonthly: Boolean(g.isMonthly)
+          }));
         }
-
-        let notices = [];
-        if (Array.isArray(item.notices)) {
-          notices = item.notices.map(n => String(n));
-        } else if (Array.isArray(item.유의사항)) {
-          notices = item.유의사항.map(n => String(n));
-        } else if (typeof item.notices === 'string') {
-          notices = item.notices.split('\n').filter(Boolean);
-        }
-
-        const carrierVal = String(item.carrier || item.company || item.통신사 || "알뜰폰").trim();
-        const titleVal = String(item.title || item.name || item.eventName || item.이벤트제목 || item.제목 || opts[0]?.name || "요금제 정보").trim();
-        const sDate = String(item.startDate || item.start_date || item.시작일 || "2026-10-16");
-        const eDate = String(item.eventEndDate || item.endDate || item.end_date || item.종료일 || "2026-10-31");
-        const aDate = String(item.activationDate || sDate);
 
         result.push({
-          id: String(item.id || ("plan-" + Date.now() + "-" + idx + "-" + Math.random().toString(36).substr(2, 4))),
-          carrier: carrierVal || "알뜰폰",
-          title: titleVal || "요금제 정보",
-          startDate: sDate,
-          eventEndDate: eDate,
-          activationDate: aDate,
-          code: String(item.code || item.refCode || item.추천인코드 || ""),
-          eventUrl: String(item.eventUrl || item.url || item.이벤트링크 || ""),
-          options: opts.length > 0 ? opts : [{ name: '기본 요금제', price: 0 }],
+          id: String(item.id || ("plan-" + Date.now() + "-" + idx)),
+          carrier: String(item.carrier || "알뜰폰"),
+          title: String(item.title || "요금제 정보"),
+          startDate: String(item.startDate || "2026-10-16"),
+          eventEndDate: String(item.eventEndDate || "2026-10-31"),
+          activationDate: String(item.activationDate || "2026-10-16"),
+          code: String(item.code || ""),
+          eventUrl: String(item.eventUrl || ""),
+          options: opts,
           gifts: gifts,
-          notices: notices
+          notices: Array.isArray(item.notices) ? item.notices : []
         });
       });
 
       return result;
-    }
-
-    function fallbackTextImportParser(rawText) {
-      if (!rawText || rawText.trim().length === 0) return [];
-
-      const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      const prices = rawText.match(/([0-9]{1,3}(?:,[0-9]{3})*|\d+)\s*원/g) || [];
-      const numbers = prices.map(p => Number(p.replace(/[^0-9]/g, ''))).filter(n => n > 0);
-
-      const planPrice = numbers.find(n => n <= 100000) || 15000;
-      const giftVal = numbers.find(n => n > 10000) || 30000;
-
-      const titleStr = lines[0] ? lines[0].substring(0, 50) : "복원된 요금제 정보";
-
-      return [{
-        id: "plan-imported-" + Date.now(),
-        carrier: "알뜰폰",
-        title: titleStr,
-        startDate: "2026-10-16",
-        eventEndDate: "2026-10-31",
-        activationDate: "2026-10-16",
-        code: "복원데이터",
-        eventUrl: "",
-        options: [{ name: "복원 요금제", price: planPrice }],
-        gifts: [{ name: "복원 사은품/혜택", cond: "텍스트 복원 혜택", val: giftVal, month: 1, endMonth: 6, isMonthly: false }],
-        notices: lines.slice(1, 5)
-      }];
     }
 
     function fmt(num) {
@@ -1267,22 +1251,28 @@ ${jsonString}
       }
     }
 
-    function deletePlan(id) {
+    async function deletePlan(id) {
       if (confirm("이 요금제를 정말 삭제하시겠습니까?")) {
         plansData = plansData.filter(p => p.id !== id);
-        saveStorage();
+        try {
+          if (window.db && window.FirebaseSDK) {
+            await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(window.db, "ssalmuk_plans", id));
+          }
+        } catch(e) {
+          console.error("삭제 동기화 오류:", e);
+        }
         showMainScreen();
       }
     }
 
-    function clonePlan(id) {
+    async function clonePlan(id) {
       const plan = plansData.find(p => p.id === id);
       if (!plan) return;
       const cloned = JSON.parse(JSON.stringify(plan));
       cloned.id = "plan-" + Date.now();
       cloned.title += " (복사본)";
       plansData.unshift(cloned);
-      saveStorage();
+      await saveStorage();
       showMainScreen();
     }
 
@@ -1379,7 +1369,7 @@ ${jsonString}
       container.appendChild(div);
     }
 
-    function savePlanForm(e) {
+    async function savePlanForm(e) {
       e.preventDefault();
       const editId = document.getElementById("formEditId").value;
 
@@ -1441,7 +1431,7 @@ ${jsonString}
         plansData.unshift(planData);
       }
 
-      saveStorage();
+      await saveStorage();
       closeAddModal();
 
       if (!document.getElementById("detailScreen").classList.contains("hidden")) {
