@@ -8,32 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Firebase SDK 추가 -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSy... (본인의 API 키 입력)",
-      authDomain: "ssalmuk.firebaseapp.com",
-      projectId: "ssalmuk",
-      storageBucket: "ssalmuk.appspot.com",
-      messagingSenderId: "...",
-      appId: "..."
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    window.db = db;
-    window.appCollection = collection(db, "ssalmuk_plans");
-    window.FirebaseSDK = { getDocs, setDoc, doc, deleteDoc };
-    
-    if (window.initAppAfterFirebase) {
-      window.initAppAfterFirebase();
-    }
-  </script>
-
+  <!-- Tailwind Config -->
   <script>
     tailwind.config = {
       theme: {
@@ -464,20 +439,37 @@
     </div>
   </div>
 
-  <!-- JavaScript Application Logic -->
-  <script>
-    // State
-    let plansData = [];
-    let currentPlanId = null;
-    let currentSelectedOptionIdx = 0;
-    let currentSelectedMonth = 10;
-    let isAdminMode = false;
+  <!-- Firebase SDK 및 앱 로직 통합 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // 본인의 Firebase 설정값
+    const firebaseConfig = {
+      apiKey: "AIzaSy... (본인의 API 키 입력)",
+      authDomain: "ssalmuk.firebaseapp.com",
+      projectId: "ssalmuk",
+      storageBucket: "ssalmuk.appspot.com",
+      messagingSenderId: "...",
+      appId: "..."
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const plansCollection = collection(db, "ssalmuk_plans");
+
+    // 전역 변수 설정
+    window.plansData = [];
+    window.currentPlanId = null;
+    window.currentSelectedOptionIdx = 0;
+    window.currentSelectedMonth = 10;
+    window.isAdminMode = false;
 
     // 비밀주소 모드 체크 (admin=prinzessin)
     function checkAdminMode() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('admin') === 'prinzessin') {
-        isAdminMode = true;
+        window.isAdminMode = true;
       }
     }
 
@@ -489,13 +481,10 @@
       const controlBar = document.getElementById("adminControlBar");
       const detailActionBtns = document.getElementById("adminDetailActionBtns");
 
-      if (isAdminMode) {
-        if (addPlanBtn) addPlanBtn.classList.remove("hidden");
-        if (addPlanBtn) addPlanBtn.classList.add("flex");
-        if (controlBar) controlBar.classList.remove("hidden");
-        if (controlBar) controlBar.classList.add("flex");
-        if (detailActionBtns) detailActionBtns.classList.remove("hidden");
-        if (detailActionBtns) detailActionBtns.classList.add("flex");
+      if (window.isAdminMode) {
+        if (addPlanBtn) { addPlanBtn.classList.remove("hidden"); addPlanBtn.classList.add("flex"); }
+        if (controlBar) { controlBar.classList.remove("hidden"); controlBar.classList.add("flex"); }
+        if (detailActionBtns) { detailActionBtns.classList.remove("hidden"); detailActionBtns.classList.add("flex"); }
       } else {
         if (addPlanBtn) addPlanBtn.classList.add("hidden");
         if (controlBar) controlBar.classList.add("hidden");
@@ -503,107 +492,32 @@
       }
     }
 
-    const initialBackupData = [
-      {
-        "id": "plan-1793018583565",
-        "carrier": "KT M모바일",
-        "code": "M",
-        "title": "자급제 키즈",
-        "startDate": "2026-10-16",
-        "eventEndDate": "2026-10-31",
-        "activationDate": "2026-10-28",
-        "eventUrl": "",
-        "options": [{"name": "키즈안심8GB+", "price": 10900}],
-        "gifts": [
-          {"name": "자급제", "cond": "", "val": 30000, "month": 3, "endMonth": 10, "isMonthly": true},
-          {"name": "이벤트코드 M", "cond": "", "val": 15000, "month": 3, "endMonth": 10, "isMonthly": true},
-          {"name": "친구초대", "cond": "", "val": 5000, "month": 3, "endMonth": 12, "isMonthly": true},
-          {"name": "바로배송유심", "cond": "", "val": 10000, "month": 5, "endMonth": 5, "isMonthly": false},
-          {"name": "바로배송유심", "cond": "", "val": 10000, "month": 8, "endMonth": 8, "isMonthly": false}
-        ],
-        "notices": []
-      },
-      {
-        "id": "plan-1793018349490",
-        "carrier": "KT M모바일",
-        "code": "M",
-        "title": "아이폰 갤럭시 자급제",
-        "startDate": "2026-10-16",
-        "eventEndDate": "2026-10-31",
-        "activationDate": "2026-10-28",
-        "eventUrl": "https://www.ktmmobile.com/event/eventDetail.do?ntcartSeq=1856&sbstCtg=E&pageNo=1",
-        "options": [{"name": "모두다맘껏7GB+(Pay5000P)", "price": 18500}],
-        "gifts": [
-          {"name": "자급제", "cond": "매월 말일", "val": 30000, "month": 3, "endMonth": 10, "isMonthly": true},
-          {"name": "이벤트코드 M", "cond": "매월 말일", "val": 20000, "month": 3, "endMonth": 10, "isMonthly": true},
-          {"name": "친구초대", "cond": "매월 말일", "val": 5000, "month": 3, "endMonth": 8, "isMonthly": true},
-          {"name": "바로배송유심", "cond": "네이버페이", "val": 10000, "month": 5, "endMonth": 5, "isMonthly": false},
-          {"name": "바로배송유심", "cond": "네이버페이", "val": 10000, "month": 8, "endMonth": 8, "isMonthly": false},
-          {"name": "네이버페이", "cond": "", "val": 5000, "month": 2, "endMonth": 25, "isMonthly": true}
-        ],
-        "notices": []
-      },
-      {
-        "id": "plan-1792655269320",
-        "carrier": "U+모바일",
-        "code": "해피할로윈",
-        "title": "22GB 0원",
-        "startDate": "2026-10-15",
-        "eventEndDate": "2026-10-26",
-        "activationDate": "2026-10-15",
-        "eventUrl": "",
-        "options": [{"name": "7G+ 통화기본", "price": 17500}],
-        "gifts": [
-          {"name": "네이버페이", "cond": "매월20일", "val": 25000, "month": 3, "endMonth": 8, "isMonthly": true},
-          {"name": "윌10개", "cond": "매월16일경", "val": 7800, "month": 2, "endMonth": 24, "isMonthly": true}
-        ],
-        "notices": []
-      }
-    ];
-
-    window.initAppAfterFirebase = async function() {
-      applyAdminUIMode();
-      await loadStorage();
-      renderMainList();
-    };
-
-    document.addEventListener("DOMContentLoaded", () => {
-      applyAdminUIMode();
-    });
-
-    // 클라우드(Firebase) 데이터 강제 동기화 로드
+    // 파이어베이스에서 데이터 불러오기 함수
     async function loadStorage() {
       try {
-        if (!window.db || !window.appCollection || !window.FirebaseSDK) {
-          plansData = initialBackupData;
-          return;
-        }
-
-        const querySnapshot = await window.FirebaseSDK.getDocs(window.appCollection);
+        const querySnapshot = await getDocs(plansCollection);
         const loadedPlans = [];
         querySnapshot.forEach((docSnap) => {
           loadedPlans.push(docSnap.data());
         });
 
         if (loadedPlans.length > 0) {
-          plansData = loadedPlans;
+          window.plansData = loadedPlans;
         } else {
-          for (const plan of initialBackupData) {
-            await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, "ssalmuk_plans", plan.id), plan);
-          }
-          plansData = initialBackupData;
+          window.plansData = [];
         }
       } catch (e) {
         console.error("Firebase 로드 실패:", e);
-        plansData = initialBackupData;
+        window.plansData = [];
       }
+      renderMainList();
     }
 
-    async function saveStorage() {
+    // 파이어베이스에 데이터 저장 함수
+    window.saveStorage = async function() {
       try {
-        if (!window.db || !window.FirebaseSDK) return;
-        for (const plan of plansData) {
-          await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, "ssalmuk_plans", plan.id), plan);
+        for (const plan of window.plansData) {
+          await setDoc(doc(db, "ssalmuk_plans", plan.id), plan);
         }
       } catch (e) {
         console.error("Firebase 저장 중 오류:", e);
@@ -611,164 +525,51 @@
       }
     }
 
-    function exportDataHTML() {
-      if (!isAdminMode) return;
-      if (!plansData || plansData.length === 0) {
-        alert("백업할 요금제 데이터가 없습니다.");
-        return;
-      }
-      try {
-        const jsonString = JSON.stringify(plansData, null, 2);
-        const htmlBackupContent = `<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>쌀먹 요금제 백업 데이터</title>
-</head>
-<body>
-  <h2>알뜰폰 쌀먹 요금제 백업 파일</h2>
-  <script id="ssalmuk-backup-data" type="application/json">
-${jsonString}
-  <\/script>
-</body>
-</html>`;
+    // 앱 초기 실행
+    window.onload = async function() {
+      applyAdminUIMode();
+      await loadStorage();
+    };
 
-        const fileName = `ssalmuk_plans_backup_${new Date().toISOString().slice(0, 10)}.html`;
-        const blob = new Blob([htmlBackupContent], { type: "text/html;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 500);
-        alert("백업 파일 다운로드가 시작되었습니다.");
-      } catch (err) {
-        alert("백업 생성 중 오류: " + err.message);
-      }
-    }
-
-    function openTextBackupModal() {
-      if (!isAdminMode) return;
-      const modal = document.getElementById("textBackupModal");
-      const textarea = document.getElementById("backupTextarea");
-      if (modal && textarea) {
-        textarea.value = JSON.stringify(plansData, null, 2);
-        modal.classList.remove("hidden");
-      }
-    }
-
-    function closeTextBackupModal() {
-      const modal = document.getElementById("textBackupModal");
-      if (modal) modal.classList.add("hidden");
-    }
-
-    function copyBackupText() {
-      const textarea = document.getElementById("backupTextarea");
-      if (!textarea) return;
-      textarea.select();
-      navigator.clipboard.writeText(textarea.value).then(() => {
-        alert("백업 코드가 클립보드에 복사되었습니다!");
-      });
-    }
-
-    function restoreFromTextarea() {
-      if (!isAdminMode) return;
-      const textarea = document.getElementById("backupTextarea");
-      if (!textarea) return;
-      const text = textarea.value.trim();
-      if (!text) return;
-      processImportedText(text);
-      closeTextBackupModal();
-    }
-
-    function importDataHTML(event) {
-      if (!isAdminMode) return;
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        processImportedText(e.target.result || "");
-      };
-      reader.readAsText(file);
-      event.target.value = "";
-    }
-
-    async function processImportedText(text) {
-      try {
-        if (text.charCodeAt(0) === 0xFEFF) text = text.substr(1);
-        let parsedObj = null;
+    // 데이터 삭제 함수
+    window.deletePlan = async function(id) {
+      if (!window.isAdminMode) return;
+      if (confirm("이 요금제를 정말 삭제하시겠습니까?")) {
+        window.plansData = window.plansData.filter(p => p.id !== id);
         try {
-          parsedObj = JSON.parse(text);
+          await deleteDoc(doc(db, "ssalmuk_plans", id));
         } catch(e) {
-          let cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-          parsedObj = JSON.parse(cleanText);
+          console.error("삭제 동기화 오류:", e);
         }
-
-        let sanitizedList = sanitizePlansArray(parsedObj);
-        if (sanitizedList && sanitizedList.length > 0) {
-          if (confirm(`총 ${sanitizedList.length}개의 요금제 데이터를 읽어왔습니다. 복원하시겠습니까?`)) {
-            plansData = sanitizedList;
-            await saveStorage();
-            renderMainList();
-            if (!document.getElementById("detailScreen").classList.contains("hidden") && currentPlanId) {
-              showDetailScreen(currentPlanId);
-            }
-            alert("요금제 데이터가 성공적으로 복원 및 DB에 동기화되었습니다!");
-          }
-        } else {
-          alert("유효한 요금제 데이터를 찾을 수 없습니다.");
-        }
-      } catch (err) {
-        alert("복원 처리 중 오류: " + err.message);
+        showMainScreen();
       }
     }
 
-    function sanitizePlansArray(rawInput) {
-      if (!rawInput) return [];
-      let candidateList = Array.isArray(rawInput) ? rawInput : [rawInput];
-      const result = [];
-      candidateList.forEach((item, idx) => {
-        if (!item || typeof item !== 'object') return;
-        let opts = Array.isArray(item.options) ? item.options.map(o => ({
-          name: String(o.name || '기본 요금제'),
-          price: Number(String(o.price || 0).replace(/[^0-9]/g, '')) || 0
-        })) : [{ name: '기본 요금제', price: 0 }];
-
-        let gifts = Array.isArray(item.gifts) ? item.gifts.map(g => ({
-          name: String(g.name || '사은품'),
-          cond: String(g.cond || ''),
-          val: Number(String(g.val || 0).replace(/[^0-9]/g, '')) || 0,
-          month: Number(g.month || 1),
-          endMonth: Number(g.endMonth || 1),
-          isMonthly: Boolean(g.isMonthly)
-        })) : [];
-
-        result.push({
-          id: String(item.id || ("plan-" + Date.now() + "-" + idx)),
-          carrier: String(item.carrier || "알뜰폰"),
-          title: String(item.title || "요금제 정보"),
-          startDate: String(item.startDate || "2026-10-16"),
-          eventEndDate: String(item.eventEndDate || "2026-10-31"),
-          activationDate: String(item.activationDate || "2026-10-16"),
-          code: String(item.code || ""),
-          eventUrl: String(item.eventUrl || ""),
-          options: opts,
-          gifts: gifts,
-          notices: Array.isArray(item.notices) ? item.notices : []
-        });
-      });
-      return result;
+    // 복사 함수
+    window.clonePlan = async function(id) {
+      if (!window.isAdminMode) return;
+      const plan = window.plansData.find(p => p.id === id);
+      if (!plan) return;
+      const cloned = JSON.parse(JSON.stringify(plan));
+      cloned.id = "plan-" + Date.now();
+      cloned.title += " (복사본)";
+      window.plansData.unshift(cloned);
+      await window.saveStorage();
+      showMainScreen();
     }
 
-    function fmt(num) {
+    // 기타 필요한 렌더링 및 모달 함수들 전역 등록
+    window.showMainScreen = function() {
+      document.getElementById("detailScreen").classList.add("hidden");
+      document.getElementById("mainScreen").classList.remove("hidden");
+      renderMainList();
+    }
+
+    window.fmt = function(num) {
       return (num || 0).toLocaleString();
     }
 
-    function getMonthLabel(baseDateStr, monthIndex) {
+    window.getMonthLabel = function(baseDateStr, monthIndex) {
       if (!baseDateStr) return `${monthIndex}월`;
       const d = new Date(baseDateStr + "T00:00:00");
       if (isNaN(d.getTime())) return `${monthIndex}월`;
@@ -776,7 +577,7 @@ ${jsonString}
       return `${d.getMonth() + 1}월`;
     }
 
-    function getMonth1Fee(activationDateStr, optPrice) {
+    window.getMonth1Fee = function(activationDateStr, optPrice) {
       if (!activationDateStr) return optPrice;
       const d = new Date(activationDateStr + "T00:00:00");
       if (isNaN(d.getTime())) return optPrice;
@@ -787,11 +588,11 @@ ${jsonString}
     }
 
     function renderMainList() {
-      document.getElementById("totalPlansCount").innerText = `총 ${plansData.length}개 요금제`;
+      document.getElementById("totalPlansCount").innerText = `총 ${window.plansData.length}개 요금제`;
       const container = document.getElementById("plansList");
       container.innerHTML = "";
 
-      if (plansData.length === 0) {
+      if (window.plansData.length === 0) {
         container.innerHTML = `
           <div class="bg-white rounded-2xl border border-ssal-border p-8 text-center text-ssal-subText text-xs space-y-3">
             <i class="fa-solid fa-folder-open text-3xl text-ssal-borderDark"></i>
@@ -801,10 +602,10 @@ ${jsonString}
         return;
       }
 
-      plansData.forEach((plan) => {
+      window.plansData.forEach((plan) => {
         const opt = (plan.options && plan.options[0]) ? plan.options[0] : { name: '기본 요금제', price: 0 };
         const actDate = plan.activationDate || plan.startDate || "2026-10-16";
-        const month1Fee = getMonth1Fee(actDate, opt.price);
+        const month1Fee = window.getMonth1Fee(actDate, opt.price);
         
         let maxNetSoFar = -Infinity;
         let bestMonth = 1;
@@ -835,7 +636,7 @@ ${jsonString}
         }
 
         const netAvg = Math.round(maxNetSoFar / bestMonth);
-        const bestMonthLabel = getMonthLabel(actDate, bestMonth);
+        const bestMonthLabel = window.getMonthLabel(actDate, bestMonth);
 
         const cardHtml = `
           <div onclick="showDetailScreen('${plan.id}')" class="bg-white rounded-2xl border border-ssal-border p-4 shadow-sm hover:border-ssal-borderDark transition cursor-pointer space-y-2.5">
@@ -855,10 +656,10 @@ ${jsonString}
 
             <div class="pt-0.5 space-y-0.5">
               <div class="text-lg font-black text-ssal-green flex items-baseline gap-1">
-                <span>최대 ${maxNetSoFar >= 0 ? '+' : ''}${fmt(maxNetSoFar)}원</span>
+                <span>최대 ${maxNetSoFar >= 0 ? '+' : ''}${window.fmt(maxNetSoFar)}원</span>
               </div>
               <div class="text-xs text-ssal-green font-semibold">
-                ${bestMonthLabel}까지 유지 시 최대 (${bestMonth}개월) · 월 평균 ${netAvg >= 0 ? '+' : ''}${fmt(netAvg)}원
+                ${bestMonthLabel}까지 유지 시 최대 (${bestMonth}개월) · 월 평균 ${netAvg >= 0 ? '+' : ''}${window.fmt(netAvg)}원
               </div>
             </div>
 
@@ -871,13 +672,13 @@ ${jsonString}
       });
     }
 
-    function showDetailScreen(planId) {
-      currentPlanId = planId;
-      const plan = plansData.find(p => p.id === planId);
+    window.showDetailScreen = function(planId) {
+      window.currentPlanId = planId;
+      const plan = window.plansData.find(p => p.id === planId);
       if (!plan) return;
 
-      currentSelectedOptionIdx = 0;
-      currentSelectedMonth = 10;
+      window.currentSelectedOptionIdx = 0;
+      window.currentSelectedMonth = 10;
 
       const actDate = plan.activationDate || plan.startDate || "-";
 
@@ -896,10 +697,10 @@ ${jsonString}
         document.getElementById("detailEventPeriodBox").classList.add("hidden");
       }
 
-      if (isAdminMode) {
-        document.getElementById("btnEditPlan").onclick = () => openAddModal(planId);
-        document.getElementById("btnDeletePlan").onclick = () => deletePlan(planId);
-        document.getElementById("btnClonePlan").onclick = () => clonePlan(planId);
+      if (window.isAdminMode) {
+        document.getElementById("btnEditPlan").onclick = () => window.openAddModal(planId);
+        document.getElementById("btnDeletePlan").onclick = () => window.deletePlan(planId);
+        document.getElementById("btnClonePlan").onclick = () => window.clonePlan(planId);
       }
 
       const optSelect = document.getElementById("detailSubPlanSelect");
@@ -908,7 +709,7 @@ ${jsonString}
       optSelect2.innerHTML = "";
 
       (plan.options || [{name: '기본', price: 0}]).forEach((opt, idx) => {
-        const optionHtml = `<option value="${idx}">${opt.name} (월 ${fmt(opt.price)}원)</option>`;
+        const optionHtml = `<option value="${idx}">${opt.name} (월 ${window.fmt(opt.price)}원)</option>`;
         optSelect.innerHTML += optionHtml;
         optSelect2.innerHTML += optionHtml;
       });
@@ -924,8 +725,8 @@ ${jsonString}
       const tabsContainer = document.getElementById("monthTabsContainer");
       tabsContainer.innerHTML = "";
       for (let m = 1; m <= 12; m++) {
-        const isSelected = m === currentSelectedMonth;
-        const mLabel = getMonthLabel(actDate, m);
+        const isSelected = m === window.currentSelectedMonth;
+        const mLabel = window.getMonthLabel(actDate, m);
         tabsContainer.innerHTML += `
           <button id="monthTab-${m}" onclick="selectMonthTab(${m})" class="py-2 text-xs font-bold rounded-lg transition border ${isSelected ? 'bg-black text-white border-black' : 'bg-white text-ssal-subText border-ssal-border hover:bg-ssal-bg'}">
             ${mLabel} (${m}M)
@@ -948,8 +749,8 @@ ${jsonString}
       (plan.gifts || []).forEach(g => {
         const startM = g.month || 1;
         const endM = g.endMonth || (g.isMonthly ? 12 : startM);
-        const startMonthLabel = getMonthLabel(actDate, startM);
-        const endMonthLabel = getMonthLabel(actDate, endM);
+        const startMonthLabel = window.getMonthLabel(actDate, startM);
+        const endMonthLabel = window.getMonthLabel(actDate, endM);
 
         let periodText = `${startMonthLabel} (${startM}M)`;
         if (g.isMonthly) {
@@ -963,7 +764,7 @@ ${jsonString}
               <div class="text-[10px] text-ssal-subText mt-0.5">${g.cond || ''}</div>
             </div>
             <div class="text-right shrink-0">
-              <span class="font-bold text-ssal-accent">+${fmt(g.val)}원</span>
+              <span class="font-bold text-ssal-accent">+${window.fmt(g.val)}원</span>
               <div class="text-[10px] font-semibold text-ssal-subText">${periodText}</div>
             </div>
           </div>
@@ -971,32 +772,26 @@ ${jsonString}
       });
     }
 
-    function showMainScreen() {
-      document.getElementById("detailScreen").classList.add("hidden");
-      document.getElementById("mainScreen").classList.remove("hidden");
-      renderMainList();
-    }
-
-    function onDetailOptionChange() {
-      currentSelectedOptionIdx = parseInt(document.getElementById("detailSubPlanSelect").value, 10);
-      document.getElementById("detailSubPlanSelect2").value = currentSelectedOptionIdx;
+    window.onDetailOptionChange = function() {
+      window.currentSelectedOptionIdx = parseInt(document.getElementById("detailSubPlanSelect").value, 10);
+      document.getElementById("detailSubPlanSelect2").value = window.currentSelectedOptionIdx;
       updateCalculations();
     }
 
-    function syncOptionSelect(val) {
-      currentSelectedOptionIdx = parseInt(val, 10);
-      document.getElementById("detailSubPlanSelect").value = currentSelectedOptionIdx;
+    window.syncOptionSelect = function(val) {
+      window.currentSelectedOptionIdx = parseInt(val, 10);
+      document.getElementById("detailSubPlanSelect").value = window.currentSelectedOptionIdx;
       updateCalculations();
     }
 
-    function selectMonthTab(month) {
-      currentSelectedMonth = month;
-      const plan = plansData.find(p => p.id === currentPlanId);
+    window.selectMonthTab = function(month) {
+      window.currentSelectedMonth = month;
+      const plan = window.plansData.find(p => p.id === window.currentPlanId);
       const actDate = plan ? (plan.activationDate || plan.startDate) : "2026-10-16";
       for (let m = 1; m <= 12; m++) {
         const btn = document.getElementById(`monthTab-${m}`);
         if (btn) {
-          const mLabel = getMonthLabel(actDate, m);
+          const mLabel = window.getMonthLabel(actDate, m);
           if (m === month) {
             btn.className = "py-2 text-xs font-bold rounded-lg transition border bg-black text-white border-black";
           } else {
@@ -1009,17 +804,17 @@ ${jsonString}
     }
 
     function updateCalculations() {
-      const plan = plansData.find(p => p.id === currentPlanId);
+      const plan = window.plansData.find(p => p.id === window.currentPlanId);
       if (!plan) return;
 
-      const opt = (plan.options && plan.options[currentSelectedOptionIdx]) ? plan.options[currentSelectedOptionIdx] : { name: '', price: 0 };
-      const mCount = currentSelectedMonth;
+      const opt = (plan.options && plan.options[window.currentSelectedOptionIdx]) ? plan.options[window.currentSelectedOptionIdx] : { name: '', price: 0 };
+      const mCount = window.currentSelectedMonth;
       const actDate = plan.activationDate || plan.startDate || "2026-10-16";
 
       document.getElementById("specPlanName").innerText = opt.name;
-      document.getElementById("specPlanPrice").innerText = `${fmt(opt.price)}원 / 월`;
+      document.getElementById("specPlanPrice").innerText = `${window.fmt(opt.price)}원 / 월`;
 
-      const month1Fee = getMonth1Fee(actDate, opt.price);
+      const month1Fee = window.getMonth1Fee(actDate, opt.price);
 
       let maxNetSoFar = -Infinity;
       let bestMonth = 1;
@@ -1057,10 +852,10 @@ ${jsonString}
         }
       }
 
-      const bestMonthLabel = getMonthLabel(actDate, bestMonth);
+      const bestMonthLabel = window.getMonthLabel(actDate, bestMonth);
       document.getElementById("maxProfitMonthLabel").innerText = bestMonthLabel;
       document.getElementById("maxProfitMonthNum").innerText = bestMonth;
-      document.getElementById("maxProfitTotalText").innerText = `${maxNetSoFar >= 0 ? '+' : ''}${fmt(maxNetSoFar)}원`;
+      document.getElementById("maxProfitTotalText").innerText = `${maxNetSoFar >= 0 ? '+' : ''}${window.fmt(maxNetSoFar)}원`;
 
       const targetMonthlyList = monthlyDetails.slice(0, bestMonth);
       let sumFee = 0;
@@ -1077,21 +872,21 @@ ${jsonString}
       let netRow = `<tr class="font-bold"><td class="p-1.5 font-semibold text-ssal-subText text-left whitespace-nowrap">누적순이익</td>`;
 
       targetMonthlyList.forEach((item, idx) => {
-        const colLabel = getMonthLabel(actDate, idx + 1);
+        const colLabel = window.getMonthLabel(actDate, idx + 1);
         headerRow += `<th class="p-1.5 px-2.5 whitespace-nowrap">${colLabel}</th>`;
-        feeRow += `<td class="p-1.5 px-2.5 text-ssal-text whitespace-nowrap">${fmt(item.fee)}원</td>`;
-        giftRow += `<td class="p-1.5 px-2.5 text-ssal-accent whitespace-nowrap">${item.gift > 0 ? '+' + fmt(item.gift) + '원' : '0원'}</td>`;
+        feeRow += `<td class="p-1.5 px-2.5 text-ssal-text whitespace-nowrap">${window.fmt(item.fee)}원</td>`;
+        giftRow += `<td class="p-1.5 px-2.5 text-ssal-accent whitespace-nowrap">${item.gift > 0 ? '+' + window.fmt(item.gift) + '원' : '0원'}</td>`;
         
         const netCls = item.netCumulative >= 0 ? 'text-ssal-green' : 'text-rose-600';
-        netRow += `<td class="p-1.5 px-2.5 ${netCls} whitespace-nowrap">${item.netCumulative >= 0 ? '+' : ''}${fmt(item.netCumulative)}원</td>`;
+        netRow += `<td class="p-1.5 px-2.5 ${netCls} whitespace-nowrap">${item.netCumulative >= 0 ? '+' : ''}${window.fmt(item.netCumulative)}원</td>`;
       });
 
       headerRow += `<th class="p-1.5 px-3 bg-emerald-100/80 text-emerald-900 border-l border-emerald-200 whitespace-nowrap">합계</th></tr>`;
-      feeRow += `<td class="p-1.5 px-3 font-bold text-ssal-text bg-emerald-50/40 border-l border-emerald-100 whitespace-nowrap">${fmt(sumFee)}원</td></tr>`;
-      giftRow += `<td class="p-1.5 px-3 font-bold text-ssal-accent bg-emerald-50/40 border-l border-emerald-100 whitespace-nowrap">+${fmt(sumGift)}원</td></tr>`;
+      feeRow += `<td class="p-1.5 px-3 font-bold text-ssal-text bg-emerald-50/40 border-l border-emerald-100 whitespace-nowrap">${window.fmt(sumFee)}원</td></tr>`;
+      giftRow += `<td class="p-1.5 px-3 font-bold text-ssal-accent bg-emerald-50/40 border-l border-emerald-100 whitespace-nowrap">+${window.fmt(sumGift)}원</td></tr>`;
       
       const totalNetCls = maxNetSoFar >= 0 ? 'text-ssal-green font-extrabold' : 'text-rose-600 font-extrabold';
-      netRow += `<td class="p-1.5 px-3 ${totalNetCls} bg-emerald-50/40 border-l border-emerald-100 whitespace-nowrap">${maxNetSoFar >= 0 ? '+' : ''}${fmt(maxNetSoFar)}원</td></tr>`;
+      netRow += `<td class="p-1.5 px-3 ${totalNetCls} bg-emerald-50/40 border-l border-emerald-100 whitespace-nowrap">${maxNetSoFar >= 0 ? '+' : ''}${window.fmt(maxNetSoFar)}원</td></tr>`;
 
       document.getElementById("maxProfitTable").innerHTML = headerRow + feeRow + giftRow + netRow;
 
@@ -1112,12 +907,12 @@ ${jsonString}
           if (g.isMonthly) {
             if (m >= startM && m <= endM) {
               monthGift += g.val;
-              giftListThisMonth.push(`${g.name} (${fmt(g.val)}원)`);
+              giftListThisMonth.push(`${g.name} (${window.fmt(g.val)}원)`);
             }
           } else {
             if (m === startM) {
               monthGift += g.val;
-              giftListThisMonth.push(`${g.name} (${fmt(g.val)}원)`);
+              giftListThisMonth.push(`${g.name} (${window.fmt(g.val)}원)`);
             }
           }
         });
@@ -1127,7 +922,7 @@ ${jsonString}
 
         monthBreakdowns.push({
           month: m,
-          monthLabel: getMonthLabel(actDate, m),
+          monthLabel: window.getMonthLabel(actDate, m),
           fee: monthFee,
           gifts: monthGift,
           giftsList: giftListThisMonth,
@@ -1138,21 +933,21 @@ ${jsonString}
       const netTotal = totalGiftsVal - totalBill;
       const netAvg = Math.round(netTotal / mCount);
 
-      document.getElementById("calcPeriodText").innerText = `${mCount}개월 (${getMonthLabel(actDate, 1)} ~ ${getMonthLabel(actDate, mCount)})`;
-      document.getElementById("calcTotalBill").innerText = `${fmt(totalBill)}원`;
-      document.getElementById("calcTotalGiftsVal").innerText = `${fmt(totalGiftsVal)}원`;
-      document.getElementById("calcGiftsSummary").innerText = (plan.gifts || []).map(g => `${g.name}(${getMonthLabel(actDate, g.month)})`).join(', ');
+      document.getElementById("calcPeriodText").innerText = `${mCount}개월 (${window.getMonthLabel(actDate, 1)} ~ ${window.getMonthLabel(actDate, mCount)})`;
+      document.getElementById("calcTotalBill").innerText = `${window.fmt(totalBill)}원`;
+      document.getElementById("calcTotalGiftsVal").innerText = `${window.fmt(totalGiftsVal)}원`;
+      document.getElementById("calcGiftsSummary").innerText = (plan.gifts || []).map(g => `${g.name}(${window.getMonthLabel(actDate, g.month)})`).join(', ');
       
       const netTotalEl = document.getElementById("calcNetTotal");
       if (netTotal >= 0) {
-        netTotalEl.innerText = `+${fmt(netTotal)}원`;
+        netTotalEl.innerText = `+${window.fmt(netTotal)}원`;
         netTotalEl.className = "text-base font-extrabold text-ssal-green";
       } else {
-        netTotalEl.innerText = `${fmt(netTotal)}원`;
+        netTotalEl.innerText = `${window.fmt(netTotal)}원`;
         netTotalEl.className = "text-base font-extrabold text-rose-600";
       }
 
-      document.getElementById("calcMonthlyAvg").innerText = `${netAvg >= 0 ? '+' : ''}${fmt(netAvg)}원`;
+      document.getElementById("calcMonthlyAvg").innerText = `${netAvg >= 0 ? '+' : ''}${window.fmt(netAvg)}원`;
       document.getElementById("calcRefCode").innerText = plan.code || "없음";
 
       const timelineBox = document.getElementById("timelineContainer");
@@ -1164,16 +959,16 @@ ${jsonString}
             <div class="font-bold text-ssal-text flex justify-between border-b border-ssal-border pb-1.5">
               <span>${item.monthLabel} (${item.month}개월차) ${item.month === 1 ? '<span class="text-[10px] text-amber-700 font-normal">(개통일 일할적용)</span>' : ''}</span>
               <span class="${item.net >= 0 ? 'text-ssal-green' : 'text-rose-600'} font-extrabold">
-                ${item.net >= 0 ? '+' : ''}${fmt(item.net)}원
+                ${item.net >= 0 ? '+' : ''}${window.fmt(item.net)}원
               </span>
             </div>
             <div class="flex justify-between text-ssal-subText">
               <span>청구금</span>
-              <span>${fmt(item.fee)}원</span>
+              <span>${window.fmt(item.fee)}원</span>
             </div>
             <div class="flex justify-between text-ssal-subText">
               <span>사은품 수령</span>
-              <span class="font-bold text-ssal-accent">${fmt(item.gifts)}원</span>
+              <span class="font-bold text-ssal-accent">${window.fmt(item.gifts)}원</span>
             </div>
             ${item.giftsList.length > 0 ? `
               <div class="text-[10px] text-ssal-subText/80 pt-1 border-t border-dashed border-ssal-border">
@@ -1185,41 +980,14 @@ ${jsonString}
       });
     }
 
-    function openEventUrl() {
-      const plan = plansData.find(p => p.id === currentPlanId);
+    window.openEventUrl = function() {
+      const plan = window.plansData.find(p => p.id === window.currentPlanId);
       if (plan && plan.eventUrl) {
         window.open(plan.eventUrl, '_blank');
       }
     }
 
-    async function deletePlan(id) {
-      if (!isAdminMode) return;
-      if (confirm("이 요금제를 정말 삭제하시겠습니까?")) {
-        plansData = plansData.filter(p => p.id !== id);
-        try {
-          if (window.db && window.FirebaseSDK) {
-            await window.FirebaseSDK.deleteDoc(window.FirebaseSDK.doc(window.db, "ssalmuk_plans", id));
-          }
-        } catch(e) {
-          console.error("삭제 동기화 오류:", e);
-        }
-        showMainScreen();
-      }
-    }
-
-    async function clonePlan(id) {
-      if (!isAdminMode) return;
-      const plan = plansData.find(p => p.id === id);
-      if (!plan) return;
-      const cloned = JSON.parse(JSON.stringify(plan));
-      cloned.id = "plan-" + Date.now();
-      cloned.title += " (복사본)";
-      plansData.unshift(cloned);
-      await saveStorage();
-      showMainScreen();
-    }
-
-    function clearFormInputs() {
+    window.clearFormInputs = function() {
       document.getElementById("planForm").reset();
       const today = new Date().toISOString().slice(0, 10);
       document.getElementById("formStartDate").value = today;
@@ -1230,13 +998,13 @@ ${jsonString}
       document.getElementById("formNotices").value = "";
     }
 
-    function openAddModal(editId = null) {
-      if (!isAdminMode) return;
-      clearFormInputs();
+    window.openAddModal = function(editId = null) {
+      if (!window.isAdminMode) return;
+      window.clearFormInputs();
       document.getElementById("formEditId").value = editId || "";
 
       if (editId) {
-        const plan = plansData.find(p => p.id === editId);
+        const plan = window.plansData.find(p => p.id === editId);
         document.getElementById("modalHeaderTitle").innerText = "요금제 수정";
         document.getElementById("formCarrier").value = plan.carrier || "";
         document.getElementById("formCode").value = plan.code || "";
@@ -1247,11 +1015,11 @@ ${jsonString}
         document.getElementById("formEventUrl").value = plan.eventUrl || "";
         document.getElementById("formNotices").value = (plan.notices || []).join('\n');
 
-        (plan.options || []).forEach(o => addFormOptionRow(o.name, o.price));
+        (plan.options || []).forEach(o => window.addFormOptionRow(o.name, o.price));
         (plan.gifts || []).forEach(g => {
           const startOffset = Math.max(0, (g.month || 1) - 1);
           const duration = Math.max(1, ((g.endMonth || g.month || 1) - (g.month || 1)) + 1);
-          addFormGiftRow(g.name, g.cond, g.val, startOffset, duration, g.isMonthly);
+          window.addFormGiftRow(g.name, g.cond, g.val, startOffset, duration, g.isMonthly);
         });
       } else {
         document.getElementById("modalHeaderTitle").innerText = "새 요금제 추가";
@@ -1259,17 +1027,17 @@ ${jsonString}
         document.getElementById("formStartDate").value = today;
         document.getElementById("formEndDate").value = today;
         document.getElementById("formActivationDate").value = today;
-        addFormOptionRow("", "");
+        window.addFormOptionRow("", "");
       }
 
       document.getElementById("planModal").classList.remove("hidden");
     }
 
-    function closeAddModal() {
+    window.closeAddModal = function() {
       document.getElementById("planModal").classList.add("hidden");
     }
 
-    function addFormOptionRow(name = "", price = "") {
+    window.addFormOptionRow = function(name = "", price = "") {
       const container = document.getElementById("formOptionsContainer");
       const div = document.createElement("div");
       div.className = "flex items-center gap-1.5 option-row";
@@ -1281,7 +1049,7 @@ ${jsonString}
       container.appendChild(div);
     }
 
-    function addFormGiftRow(name = "", cond = "", val = "", startOffset = 0, durationMonths = 1, isMonthly = false) {
+    window.addFormGiftRow = function(name = "", cond = "", val = "", startOffset = 0, durationMonths = 1, isMonthly = false) {
       const container = document.getElementById("formGiftsContainer");
       const div = document.createElement("div");
       div.className = "bg-white p-2 border border-ssal-border rounded-lg space-y-1.5 gift-row";
@@ -1313,9 +1081,9 @@ ${jsonString}
       container.appendChild(div);
     }
 
-    async function savePlanForm(e) {
+    window.savePlanForm = async function(e) {
       e.preventDefault();
-      if (!isAdminMode) return;
+      if (!window.isAdminMode) return;
       const editId = document.getElementById("formEditId").value;
 
       const optRows = document.querySelectorAll(".option-row");
@@ -1362,20 +1130,174 @@ ${jsonString}
       };
 
       if (editId) {
-        const idx = plansData.findIndex(p => p.id === editId);
-        if (idx >= 0) plansData[idx] = planData;
+        const idx = window.plansData.findIndex(p => p.id === editId);
+        if (idx >= 0) window.plansData[idx] = planData;
       } else {
-        plansData.unshift(planData);
+        window.plansData.unshift(planData);
       }
 
-      await saveStorage();
-      closeAddModal();
+      await window.saveStorage();
+      window.closeAddModal();
 
       if (!document.getElementById("detailScreen").classList.contains("hidden")) {
-        showDetailScreen(planData.id);
+        window.showDetailScreen(planData.id);
       } else {
-        renderMainList();
+        window.showMainScreen();
       }
+    }
+
+    // 백업 및 복원 함수들
+    window.exportDataHTML = function() {
+      if (!window.isAdminMode) return;
+      if (!window.plansData || window.plansData.length === 0) {
+        alert("백업할 요금제 데이터가 없습니다.");
+        return;
+      }
+      try {
+        const jsonString = JSON.stringify(window.plansData, null, 2);
+        const htmlBackupContent = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>쌀먹 요금제 백업 데이터</title>
+</head>
+<body>
+  <h2>알뜰폰 쌀먹 요금제 백업 파일</h2>
+  <script id="ssalmuk-backup-data" type="application/json">
+${jsonString}
+  <\/script>
+</body>
+</html>`;
+
+        const fileName = `ssalmuk_plans_backup_${new Date().toISOString().slice(0, 10)}.html`;
+        const blob = new Blob([htmlBackupContent], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 500);
+        alert("백업 파일 다운로드가 시작되었습니다.");
+      } catch (err) {
+        alert("백업 생성 중 오류: " + err.message);
+      }
+    }
+
+    window.openTextBackupModal = function() {
+      if (!window.isAdminMode) return;
+      const modal = document.getElementById("textBackupModal");
+      const textarea = document.getElementById("backupTextarea");
+      if (modal && textarea) {
+        textarea.value = JSON.stringify(window.plansData, null, 2);
+        modal.classList.remove("hidden");
+      }
+    }
+
+    window.closeTextBackupModal = function() {
+      const modal = document.getElementById("textBackupModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    window.copyBackupText = function() {
+      const textarea = document.getElementById("backupTextarea");
+      if (!textarea) return;
+      textarea.select();
+      navigator.clipboard.writeText(textarea.value).then(() => {
+        alert("백업 코드가 클립보드에 복사되었습니다!");
+      });
+    }
+
+    window.restoreFromTextarea = function() {
+      if (!window.isAdminMode) return;
+      const textarea = document.getElementById("backupTextarea");
+      if (!textarea) return;
+      const text = textarea.value.trim();
+      if (!text) return;
+      processImportedText(text);
+      window.closeTextBackupModal();
+    }
+
+    window.importDataHTML = function(event) {
+      if (!window.isAdminMode) return;
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        processImportedText(e.target.result || "");
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    async function processImportedText(text) {
+      try {
+        if (text.charCodeAt(0) === 0xFEFF) text = text.substr(1);
+        let parsedObj = null;
+        try {
+          parsedObj = JSON.parse(text);
+        } catch(e) {
+          let cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+          parsedObj = JSON.parse(cleanText);
+        }
+
+        let sanitizedList = window.sanitizePlansArray(parsedObj);
+        if (sanitizedList && sanitizedList.length > 0) {
+          if (confirm(`총 ${sanitizedList.length}개의 요금제 데이터를 읽어왔습니다. 복원하시겠습니까?`)) {
+            window.plansData = sanitizedList;
+            await window.saveStorage();
+            renderMainList();
+            if (!document.getElementById("detailScreen").classList.contains("hidden") && window.currentPlanId) {
+              window.showDetailScreen(window.currentPlanId);
+            }
+            alert("요금제 데이터가 성공적으로 복원 및 DB에 동기화되었습니다!");
+          }
+        } else {
+          alert("유효한 요금제 데이터를 찾을 수 없습니다.");
+        }
+      } catch (err) {
+        alert("복원 처리 중 오류: " + err.message);
+      }
+    }
+
+    window.sanitizePlansArray = function(rawInput) {
+      if (!rawInput) return [];
+      let candidateList = Array.isArray(rawInput) ? rawInput : [rawInput];
+      const result = [];
+      candidateList.forEach((item, idx) => {
+        if (!item || typeof item !== 'object') return;
+        let opts = Array.isArray(item.options) ? item.options.map(o => ({
+          name: String(o.name || '기본 요금제'),
+          price: Number(String(o.price || 0).replace(/[^0-9]/g, '')) || 0
+        })) : [{ name: '기본 요금제', price: 0 }];
+
+        let gifts = Array.isArray(item.gifts) ? item.gifts.map(g => ({
+          name: String(g.name || '사은품'),
+          cond: String(g.cond || ''),
+          val: Number(String(g.val || 0).replace(/[^0-9]/g, '')) || 0,
+          month: Number(g.month || 1),
+          endMonth: Number(g.endMonth || 1),
+          isMonthly: Boolean(g.isMonthly)
+        })) : [];
+
+        result.push({
+          id: String(item.id || ("plan-" + Date.now() + "-" + idx)),
+          carrier: String(item.carrier || "알뜰폰"),
+          title: String(item.title || "요금제 정보"),
+          startDate: String(item.startDate || "2026-10-16"),
+          eventEndDate: String(item.eventEndDate || "2026-10-31"),
+          activationDate: String(item.activationDate || "2026-10-16"),
+          code: String(item.code || ""),
+          eventUrl: String(item.eventUrl || ""),
+          options: opts,
+          gifts: gifts,
+          notices: Array.isArray(item.notices) ? item.notices : []
+        });
+      });
+      return result;
     }
   </script>
 </body>
