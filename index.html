@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>쌀먹 요금제 - 알뜰폰 사은품/유지기간별 순이익 계산기 (관리자용)</title>
+  <title>쌀먹 요금제 - 알뜰폰 사은품/유지기간별 순이익 계산기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,26 +13,22 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // TODO: 본인의 Firebase 설정값으로 변경해주세요!
     const firebaseConfig = {
-  apiKey: "AIzaSyDnKOnOEjoZOOJpK2T2mpyRmJr5s2Kkdmo",
-  authDomain: "ssalmuk-85f02.firebaseapp.com",
-  projectId: "ssalmuk-85f02",
-  storageBucket: "ssalmuk-85f02.firebasestorage.app",
-  messagingSenderId: "532509805583",
-  appId: "1:532509805583:web:330851850017d5b0b4a77a",
-  measurementId: "G-BE9RM11SZW"
-};
+      apiKey: "AIzaSy... (본인의 API 키 입력)",
+      authDomain: "ssalmuk.firebaseapp.com",
+      projectId: "ssalmuk",
+      storageBucket: "ssalmuk.appspot.com",
+      messagingSenderId: "...",
+      appId: "..."
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 전역으로 내보내기
     window.db = db;
     window.appCollection = collection(db, "ssalmuk_plans");
     window.FirebaseSDK = { getDocs, setDoc, doc, deleteDoc };
     
-    // 앱 시작 시 데이터 로드 트리거
     if (window.initAppAfterFirebase) {
       window.initAppAfterFirebase();
     }
@@ -96,7 +92,8 @@
         <h1 class="text-xl sm:text-2xl font-black tracking-tight text-ssal-text">쌀먹 요금제</h1>
         
         <div class="flex items-center gap-1.5">
-          <button onclick="openAddModal()" class="px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-white bg-[#9e3412] hover:bg-[#802a0e] rounded-lg shadow-sm transition flex items-center gap-1 shrink-0">
+          <!-- 관리자 전용: 새 요금제 추가 버튼 -->
+          <button id="adminBtnAddPlan" onclick="openAddModal()" class="px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-white bg-[#9e3412] hover:bg-[#802a0e] rounded-lg shadow-sm transition hidden items-center gap-1 shrink-0">
             <i class="fa-solid fa-plus text-xs"></i>
             <span>새 요금제</span>
           </button>
@@ -112,7 +109,8 @@
       <div class="flex items-center justify-between pt-1 pb-1 text-xs">
         <span id="totalPlansCount" class="font-bold text-ssal-subText">총 0개 요금제</span>
         
-        <div class="flex items-center gap-1.5 flex-wrap justify-end">
+        <!-- 관리자 전용: 백업 및 복원 컨트롤 바 -->
+        <div id="adminControlBar" class="flex items-center gap-1.5 flex-wrap justify-end hidden">
           <button onclick="exportDataHTML()" title="백업 파일 다운로드 및 복사" class="text-ssal-subText hover:text-ssal-accent transition text-[11px] font-semibold flex items-center gap-1">
             <i class="fa-solid fa-download"></i> 백업
           </button>
@@ -143,7 +141,8 @@
           <span>목록으로</span>
         </button>
 
-        <div class="flex items-center gap-1.5">
+        <!-- 관리자 전용: 상세 화면 제어 버튼들 (복사, 수정, 삭제) -->
+        <div id="adminDetailActionBtns" class="flex items-center gap-1.5 hidden">
           <button id="btnClonePlan" class="px-2.5 py-1.5 text-xs font-semibold text-ssal-subText bg-[#eee9e0] hover:bg-[#e2dccf] rounded-lg transition">
             <i class="fa-regular fa-copy"></i> 복사
           </button>
@@ -472,8 +471,38 @@
     let currentPlanId = null;
     let currentSelectedOptionIdx = 0;
     let currentSelectedMonth = 10;
+    let isAdminMode = false;
 
-    // 백업 메모장에 있던 초기 데이터 (DB가 비어있을 때 자동 등록됨)
+    // 비밀주소 모드 체크 (admin=prinzessin)
+    function checkAdminMode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('admin') === 'prinzessin') {
+        isAdminMode = true;
+      }
+    }
+
+    // 관리자 전용 버튼 표시 여부 적용
+    function applyAdminUIMode() {
+      checkAdminMode();
+      
+      const addPlanBtn = document.getElementById("adminBtnAddPlan");
+      const controlBar = document.getElementById("adminControlBar");
+      const detailActionBtns = document.getElementById("adminDetailActionBtns");
+
+      if (isAdminMode) {
+        if (addPlanBtn) addPlanBtn.classList.remove("hidden");
+        if (addPlanBtn) addPlanBtn.classList.add("flex");
+        if (controlBar) controlBar.classList.remove("hidden");
+        if (controlBar) controlBar.classList.add("flex");
+        if (detailActionBtns) detailActionBtns.classList.remove("hidden");
+        if (detailActionBtns) detailActionBtns.classList.add("flex");
+      } else {
+        if (addPlanBtn) addPlanBtn.classList.add("hidden");
+        if (controlBar) controlBar.classList.add("hidden");
+        if (detailActionBtns) detailActionBtns.classList.add("hidden");
+      }
+    }
+
     const initialBackupData = [
       {
         "id": "plan-1793018583565",
@@ -533,15 +562,19 @@
     ];
 
     window.initAppAfterFirebase = async function() {
+      applyAdminUIMode();
       await loadStorage();
       renderMainList();
     };
 
-    // Firebase 연동 데이터 로드 함수
+    // 로딩 시 DOM이 먼저 준비되었을 때도 UI 적용
+    document.addEventListener("DOMContentLoaded", () => {
+      applyAdminUIMode();
+    });
+
     async function loadStorage() {
       try {
         if (!window.db || !window.appCollection || !window.FirebaseSDK) {
-          // Firebase가 아직 로드 안 된 경우 로컬 데이터 사용
           plansData = initialBackupData;
           return;
         }
@@ -555,7 +588,6 @@
         if (loadedPlans.length > 0) {
           plansData = loadedPlans;
         } else {
-          // DB가 완전히 비어있다면 백업 데이터(initialBackupData)를 자동으로 DB에 밀어넣음
           for (const plan of initialBackupData) {
             await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, "ssalmuk_plans", plan.id), plan);
           }
@@ -567,12 +599,9 @@
       }
     }
 
-    // Firebase에 데이터 저장/수정 함수
     async function saveStorage() {
       try {
         if (!window.db || !window.FirebaseSDK) return;
-        
-        // 현재 plansData에 있는 모든 항목을 Firestore에 동기화 저장
         for (const plan of plansData) {
           await window.FirebaseSDK.setDoc(window.FirebaseSDK.doc(window.db, "ssalmuk_plans", plan.id), plan);
         }
@@ -583,13 +612,13 @@
     }
 
     function exportDataHTML() {
+      if (!isAdminMode) return;
       if (!plansData || plansData.length === 0) {
         alert("백업할 요금제 데이터가 없습니다.");
         return;
       }
       try {
         const jsonString = JSON.stringify(plansData, null, 2);
-        
         const htmlBackupContent = `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -605,73 +634,30 @@ ${jsonString}
 </html>`;
 
         const fileName = `ssalmuk_plans_backup_${new Date().toISOString().slice(0, 10)}.html`;
-
-        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        let success = false;
-
-        if (!isMobile) {
-          try {
-            const blob = new Blob([htmlBackupContent], { type: "text/html;charset=utf-8" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-            }, 500);
-            success = true;
-          } catch(e) {
-            console.warn("Blob download failed:", e);
-          }
-        }
-
-        if (!success) {
-          try {
-            const blob = new Blob([htmlBackupContent], { type: "text/html;charset=utf-8" });
-            const reader = new FileReader();
-            reader.onloadend = function() {
-              const dataUrl = reader.result;
-              const a = document.createElement('a');
-              a.href = dataUrl;
-              a.download = fileName;
-              a.target = "_blank";
-              document.body.appendChild(a);
-              a.click();
-              setTimeout(() => document.body.removeChild(a), 1000);
-            };
-            reader.readAsDataURL(blob);
-            success = true;
-          } catch(err) {
-            console.warn("DataURL mobile export failed:", err);
-          }
-        }
-
-        if (success) {
-          alert("백업 파일 다운로드가 시작되었습니다.");
-        } else {
-          alert("파일 다운로드에 실패했습니다. [📝 텍스트 복원] 버튼을 이용해 주세요.");
-        }
-
+        const blob = new Blob([htmlBackupContent], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 500);
+        alert("백업 파일 다운로드가 시작되었습니다.");
       } catch (err) {
         alert("백업 생성 중 오류: " + err.message);
       }
     }
 
     function openTextBackupModal() {
+      if (!isAdminMode) return;
       const modal = document.getElementById("textBackupModal");
       const textarea = document.getElementById("backupTextarea");
-      
       if (modal && textarea) {
         textarea.value = JSON.stringify(plansData, null, 2);
         modal.classList.remove("hidden");
-      } else {
-        const inputCode = prompt("복원할 텍스트(JSON) 코드를 아래에 붙여넣으세요:");
-        if (inputCode && inputCode.trim()) {
-          processImportedText(inputCode.trim());
-        }
       }
     }
 
@@ -684,31 +670,25 @@ ${jsonString}
       const textarea = document.getElementById("backupTextarea");
       if (!textarea) return;
       textarea.select();
-      textarea.setSelectionRange(0, 99999);
       navigator.clipboard.writeText(textarea.value).then(() => {
-        alert("백업 코드가 클립보드에 복사되었습니다!");
-      }).catch(() => {
-        document.execCommand("copy");
         alert("백업 코드가 클립보드에 복사되었습니다!");
       });
     }
 
     function restoreFromTextarea() {
+      if (!isAdminMode) return;
       const textarea = document.getElementById("backupTextarea");
       if (!textarea) return;
       const text = textarea.value.trim();
-      if (!text) {
-        alert("복원할 텍스트 코드를 입력해 주세요.");
-        return;
-      }
+      if (!text) return;
       processImportedText(text);
       closeTextBackupModal();
     }
 
     function importDataHTML(event) {
+      if (!isAdminMode) return;
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function(e) {
         processImportedText(e.target.result || "");
@@ -720,41 +700,20 @@ ${jsonString}
     async function processImportedText(text) {
       try {
         if (text.charCodeAt(0) === 0xFEFF) text = text.substr(1);
-
         let parsedObj = null;
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        const scriptTag = doc.getElementById('ssalmuk-backup-data');
-
-        if (scriptTag && scriptTag.textContent.trim()) {
-          try {
-            parsedObj = JSON.parse(scriptTag.textContent.trim());
-          } catch (errJson) {}
-        }
-
-        if (!parsedObj) {
-          try {
-            parsedObj = JSON.parse(text);
-          } catch(e) {
-            let cleanText = text
-              .replace(/```json/gi, '')
-              .replace(/```html/gi, '')
-              .replace(/```/g, '')
-              .replace(/<!--[\s\S]*?-->/g, '')
-              .trim();
-            try { parsedObj = JSON.parse(cleanText); } catch(e2) {}
-          }
+        try {
+          parsedObj = JSON.parse(text);
+        } catch(e) {
+          let cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+          parsedObj = JSON.parse(cleanText);
         }
 
         let sanitizedList = sanitizePlansArray(parsedObj);
-
         if (sanitizedList && sanitizedList.length > 0) {
           if (confirm(`총 ${sanitizedList.length}개의 요금제 데이터를 읽어왔습니다. 복원하시겠습니까?`)) {
             plansData = sanitizedList;
             await saveStorage();
             renderMainList();
-            
             if (!document.getElementById("detailScreen").classList.contains("hidden") && currentPlanId) {
               showDetailScreen(currentPlanId);
             }
@@ -772,31 +731,21 @@ ${jsonString}
       if (!rawInput) return [];
       let candidateList = Array.isArray(rawInput) ? rawInput : [rawInput];
       const result = [];
-
       candidateList.forEach((item, idx) => {
         if (!item || typeof item !== 'object') return;
+        let opts = Array.isArray(item.options) ? item.options.map(o => ({
+          name: String(o.name || '기본 요금제'),
+          price: Number(String(o.price || 0).replace(/[^0-9]/g, '')) || 0
+        })) : [{ name: '기본 요금제', price: 0 }];
 
-        let opts = [];
-        if (Array.isArray(item.options) && item.options.length > 0) {
-          opts = item.options.map(o => ({
-            name: String(o.name || '기본 요금제'),
-            price: Number(String(o.price || 0).replace(/[^0-9]/g, '')) || 0
-          }));
-        } else {
-          opts = [{ name: '기본 요금제', price: 0 }];
-        }
-
-        let gifts = [];
-        if (Array.isArray(item.gifts)) {
-          gifts = item.gifts.map(g => ({
-            name: String(g.name || '사은품'),
-            cond: String(g.cond || ''),
-            val: Number(String(g.val || 0).replace(/[^0-9]/g, '')) || 0,
-            month: Number(g.month || 1),
-            endMonth: Number(g.endMonth || 1),
-            isMonthly: Boolean(g.isMonthly)
-          }));
-        }
+        let gifts = Array.isArray(item.gifts) ? item.gifts.map(g => ({
+          name: String(g.name || '사은품'),
+          cond: String(g.cond || ''),
+          val: Number(String(g.val || 0).replace(/[^0-9]/g, '')) || 0,
+          month: Number(g.month || 1),
+          endMonth: Number(g.endMonth || 1),
+          isMonthly: Boolean(g.isMonthly)
+        })) : [];
 
         result.push({
           id: String(item.id || ("plan-" + Date.now() + "-" + idx)),
@@ -812,7 +761,6 @@ ${jsonString}
           notices: Array.isArray(item.notices) ? item.notices : []
         });
       });
-
       return result;
     }
 
@@ -848,12 +796,6 @@ ${jsonString}
           <div class="bg-white rounded-2xl border border-ssal-border p-8 text-center text-ssal-subText text-xs space-y-3">
             <i class="fa-solid fa-folder-open text-3xl text-ssal-borderDark"></i>
             <div class="font-bold text-ssal-text">등록된 요금제가 없습니다.</div>
-            <p class="text-[11px] text-ssal-subText">새 요금제를 직접 추가해 보세요.</p>
-            <div class="flex items-center justify-center gap-2 pt-1">
-              <button onclick="openAddModal()" class="px-3.5 py-1.5 bg-[#9e3412] hover:bg-[#802a0e] text-white rounded-xl font-bold transition">
-                + 새 요금제 추가
-              </button>
-            </div>
           </div>
         `;
         return;
@@ -954,9 +896,11 @@ ${jsonString}
         document.getElementById("detailEventPeriodBox").classList.add("hidden");
       }
 
-      document.getElementById("btnEditPlan").onclick = () => openAddModal(planId);
-      document.getElementById("btnDeletePlan").onclick = () => deletePlan(planId);
-      document.getElementById("btnClonePlan").onclick = () => clonePlan(planId);
+      if (isAdminMode) {
+        document.getElementById("btnEditPlan").onclick = () => openAddModal(planId);
+        document.getElementById("btnDeletePlan").onclick = () => deletePlan(planId);
+        document.getElementById("btnClonePlan").onclick = () => clonePlan(planId);
+      }
 
       const optSelect = document.getElementById("detailSubPlanSelect");
       const optSelect2 = document.getElementById("detailSubPlanSelect2");
@@ -1004,7 +948,6 @@ ${jsonString}
       (plan.gifts || []).forEach(g => {
         const startM = g.month || 1;
         const endM = g.endMonth || (g.isMonthly ? 12 : startM);
-
         const startMonthLabel = getMonthLabel(actDate, startM);
         const endMonthLabel = getMonthLabel(actDate, endM);
 
@@ -1081,7 +1024,6 @@ ${jsonString}
       let maxNetSoFar = -Infinity;
       let bestMonth = 1;
       let monthlyDetails = [];
-      
       let tempBillTotal = 0;
       let tempGiftsTotal = 0;
 
@@ -1167,7 +1109,6 @@ ${jsonString}
         (plan.gifts || []).forEach(g => {
           const startM = g.month || 1;
           const endM = g.endMonth || (g.isMonthly ? 12 : startM);
-
           if (g.isMonthly) {
             if (m >= startM && m <= endM) {
               monthGift += g.val;
@@ -1252,6 +1193,7 @@ ${jsonString}
     }
 
     async function deletePlan(id) {
+      if (!isAdminMode) return;
       if (confirm("이 요금제를 정말 삭제하시겠습니까?")) {
         plansData = plansData.filter(p => p.id !== id);
         try {
@@ -1266,6 +1208,7 @@ ${jsonString}
     }
 
     async function clonePlan(id) {
+      if (!isAdminMode) return;
       const plan = plansData.find(p => p.id === id);
       if (!plan) return;
       const cloned = JSON.parse(JSON.stringify(plan));
@@ -1288,6 +1231,7 @@ ${jsonString}
     }
 
     function openAddModal(editId = null) {
+      if (!isAdminMode) return;
       clearFormInputs();
       document.getElementById("formEditId").value = editId || "";
 
@@ -1371,6 +1315,7 @@ ${jsonString}
 
     async function savePlanForm(e) {
       e.preventDefault();
+      if (!isAdminMode) return;
       const editId = document.getElementById("formEditId").value;
 
       const optRows = document.querySelectorAll(".option-row");
@@ -1387,7 +1332,6 @@ ${jsonString}
         const name = r.querySelector(".gift-name").value.trim();
         const val = parseInt(r.querySelector(".gift-val").value, 10) || 0;
         const cond = r.querySelector(".gift-cond").value.trim();
-        
         const startOffset = parseInt(r.querySelector(".gift-start-offset").value, 10) || 0;
         const durationMonths = parseInt(r.querySelector(".gift-duration").value, 10) || 1;
         const isMonthly = r.querySelector(".gift-monthly").checked;
@@ -1396,14 +1340,7 @@ ${jsonString}
         const endMonth = startMonth + durationMonths - 1;
 
         if (name) {
-          gifts.push({ 
-            name, 
-            cond, 
-            val, 
-            month: startMonth, 
-            endMonth: endMonth, 
-            isMonthly 
-          });
+          gifts.push({ name, cond, val, month: startMonth, endMonth: endMonth, isMonthly });
         }
       });
 
