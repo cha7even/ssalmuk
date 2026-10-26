@@ -567,11 +567,11 @@
       renderMainList();
     };
 
-    // 로딩 시 DOM이 먼저 준비되었을 때도 UI 적용
     document.addEventListener("DOMContentLoaded", () => {
       applyAdminUIMode();
     });
 
+    // 클라우드(Firebase) 데이터 강제 동기화 로드
     async function loadStorage() {
       try {
         if (!window.db || !window.appCollection || !window.FirebaseSDK) {
@@ -594,7 +594,7 @@
           plansData = initialBackupData;
         }
       } catch (e) {
-        console.error("Firebase 로드 실패, 로컬 데이터 사용:", e);
+        console.error("Firebase 로드 실패:", e);
         plansData = initialBackupData;
       }
     }
