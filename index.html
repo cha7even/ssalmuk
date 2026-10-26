@@ -444,7 +444,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 본인의 Firebase 설정값
     const firebaseConfig = {
   apiKey: "AIzaSyDnKOnOEjoZOOJpK2T2mpyRmJr5s2Kkdmo",
   authDomain: "ssalmuk-85f02.firebaseapp.com",
@@ -455,18 +454,17 @@
   measurementId: "G-BE9RM11SZW"
 };
 
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const plansCollection = collection(db, "ssalmuk_plans");
 
-    // 전역 변수 설정
     window.plansData = [];
     window.currentPlanId = null;
     window.currentSelectedOptionIdx = 0;
     window.currentSelectedMonth = 10;
     window.isAdminMode = false;
 
-    // 비밀주소 모드 체크 (admin=prinzessin)
     function checkAdminMode() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('admin') === 'prinzessin') {
@@ -474,7 +472,6 @@
       }
     }
 
-    // 관리자 전용 버튼 표시 여부 적용
     function applyAdminUIMode() {
       checkAdminMode();
       
@@ -493,7 +490,6 @@
       }
     }
 
-    // 파이어베이스에서 데이터 불러오기 함수
     async function loadStorage() {
       try {
         const querySnapshot = await getDocs(plansCollection);
@@ -502,11 +498,7 @@
           loadedPlans.push(docSnap.data());
         });
 
-        if (loadedPlans.length > 0) {
-          window.plansData = loadedPlans;
-        } else {
-          window.plansData = [];
-        }
+        window.plansData = loadedPlans;
       } catch (e) {
         console.error("Firebase 로드 실패:", e);
         window.plansData = [];
@@ -514,7 +506,6 @@
       renderMainList();
     }
 
-    // 파이어베이스에 데이터 저장 함수
     window.saveStorage = async function() {
       try {
         for (const plan of window.plansData) {
@@ -522,17 +513,15 @@
         }
       } catch (e) {
         console.error("Firebase 저장 중 오류:", e);
-        alert("데이터 저장 중 오류가 발생했습니다.");
       }
     }
 
-    // 앱 초기 실행
+    // 앱 실행 시 관리자 모드 체크 및 데이터 로드 확실히 수행
     window.onload = async function() {
       applyAdminUIMode();
       await loadStorage();
     };
 
-    // 데이터 삭제 함수
     window.deletePlan = async function(id) {
       if (!window.isAdminMode) return;
       if (confirm("이 요금제를 정말 삭제하시겠습니까?")) {
@@ -546,7 +535,6 @@
       }
     }
 
-    // 복사 함수
     window.clonePlan = async function(id) {
       if (!window.isAdminMode) return;
       const plan = window.plansData.find(p => p.id === id);
@@ -559,7 +547,6 @@
       showMainScreen();
     }
 
-    // 기타 필요한 렌더링 및 모달 함수들 전역 등록
     window.showMainScreen = function() {
       document.getElementById("detailScreen").classList.add("hidden");
       document.getElementById("mainScreen").classList.remove("hidden");
