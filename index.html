@@ -445,15 +445,13 @@
     import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyDnKOnOEjoZOOJpK2T2mpyRmJr5s2Kkdmo",
-  authDomain: "ssalmuk-85f02.firebaseapp.com",
-  projectId: "ssalmuk-85f02",
-  storageBucket: "ssalmuk-85f02.firebasestorage.app",
-  messagingSenderId: "532509805583",
-  appId: "1:532509805583:web:330851850017d5b0b4a77a",
-  measurementId: "G-BE9RM11SZW"
-};
-
+      apiKey: "AIzaSy... (본인의 API 키 입력)",
+      authDomain: "ssalmuk.firebaseapp.com",
+      projectId: "ssalmuk",
+      storageBucket: "ssalmuk.appspot.com",
+      messagingSenderId: "...",
+      appId: "..."
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -498,6 +496,13 @@
           loadedPlans.push(docSnap.data());
         });
 
+        // 1. 이벤트 종료일이 늦을수록 앞에 오도록 정렬 (내림차순 정렬)
+        loadedPlans.sort((a, b) => {
+          const dateA = a.eventEndDate || a.startDate || "";
+          const dateB = b.eventEndDate || b.startDate || "";
+          return dateB.localeCompare(dateA);
+        });
+
         window.plansData = loadedPlans;
       } catch (e) {
         console.error("Firebase 로드 실패:", e);
@@ -516,7 +521,6 @@
       }
     }
 
-    // 앱 실행 시 관리자 모드 체크 및 데이터 로드 확실히 수행
     window.onload = async function() {
       applyAdminUIMode();
       await loadStorage();
@@ -545,6 +549,25 @@
       window.plansData.unshift(cloned);
       await window.saveStorage();
       showMainScreen();
+    }
+
+    // 2. 종료 / 조기종료 상태 토글 함수 (관리자 전용)
+    window.togglePlanStatus = async function(event, id, statusType) {
+      event.stopPropagation(); // 카드 클릭 상세페이지 이동 방지
+      if (!window.isAdminMode) return;
+
+      const plan = window.plansData.find(p => p.id === id);
+      if (!plan) return;
+
+      // 이미 같은 상태면 해제(''), 아니면 해당 상태로 변경
+      if (plan.status === statusType) {
+        plan.status = '';
+      } else {
+        plan.status = statusType; // 'ended' 또는 'earlyEnded'
+      }
+
+      await window.saveStorage();
+      renderMainList();
     }
 
     window.showMainScreen = function() {
@@ -626,12 +649,49 @@
         const netAvg = Math.round(maxNetSoFar / bestMonth);
         const bestMonthLabel = window.getMonthLabel(actDate, bestMonth);
 
+        // 종료 또는 조기종료 상태 체크 및 스타일 지정
+        const isEnded = plan.status === 'ended';
+        const isEarlyEnded = plan.status === 'earlyEnded';
+        const hasEndedStatus = isEnded || isEarlyEnded;
+
+        // 투명도(희미하게) 및 배경 스타일 처리
+        const cardOpacityClass = hasEndedStatus ? 'opacity-40 bg-gray-50' : 'bg-white';
+        
+        // 상태 뱃지 HTML 생성
+        let statusBadgeHtml = '';
+        if (isEnded) {
+          statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-md">종료</span>`;
+        } else if (isEarlyEnded) {
+          statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-md">조기종료</span>`;
+        }
+
+        // 관리자용 종료/조기종료 버튼 HTML 생성
+        let adminStatusButtonsHtml = '';
+        if (window.isAdminMode) {
+          const endedBtnStyle = isEnded ? 'bg-rose-600 text-white font-bold' : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+          const earlyBtnStyle = isEarlyEnded ? 'bg-amber-600 text-white font-bold' : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+
+          adminStatusButtonsHtml = `
+            <div class="flex items-center gap-1 pt-1.5 border-t border-ssal-border/60 justify-end" onclick="event.stopPropagation()">
+              <button onclick="togglePlanStatus(event, '${plan.id}', 'ended')" class="px-2 py-1 text-[10px] rounded transition ${endedBtnStyle}">
+                종료
+              </button>
+              <button onclick="togglePlanStatus(event, '${plan.id}', 'earlyEnded')" class="px-2 py-1 text-[10px] rounded transition ${earlyBtnStyle}">
+                조기종료
+              </button>
+            </div>
+          `;
+        }
+
         const cardHtml = `
-          <div onclick="showDetailScreen('${plan.id}')" class="bg-white rounded-2xl border border-ssal-border p-4 shadow-sm hover:border-ssal-borderDark transition cursor-pointer space-y-2.5">
+          <div onclick="showDetailScreen('${plan.id}')" class="${cardOpacityClass} rounded-2xl border border-ssal-border p-4 shadow-sm hover:border-ssal-borderDark transition cursor-pointer space-y-2.5">
             <div class="flex items-start justify-between gap-2">
-              <h3 class="text-base font-extrabold text-ssal-text leading-snug">
-                ${plan.title || '제목 없음'}
-              </h3>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base font-extrabold text-ssal-text leading-snug">
+                  ${plan.title || '제목 없음'}
+                </h3>
+                ${statusBadgeHtml}
+              </div>
               <span class="shrink-0 px-2.5 py-1 text-xs font-semibold bg-[#eee9e0] text-ssal-subText rounded-full">
                 ${plan.carrier || '알뜰폰'}
               </span>
@@ -651,9 +711,11 @@
               </div>
             </div>
 
-            <div class="text-xs font-semibold text-ssal-green pt-1 border-t border-ssal-border/60">
-              ${opt.name}
+            <div class="text-xs font-semibold text-ssal-green pt-1 border-t border-ssal-border/60 flex justify-between items-center">
+              <span>${opt.name}</span>
             </div>
+
+            ${adminStatusButtonsHtml}
           </div>
         `;
         container.innerHTML += cardHtml;
@@ -1103,6 +1165,10 @@
       const noticesStr = document.getElementById("formNotices").value.trim();
       const notices = noticesStr ? noticesStr.split('\n').filter(n => n.trim()) : [];
 
+      // 기존 요금제의 status(종료 여부) 유지
+      const existingPlan = editId ? window.plansData.find(p => p.id === editId) : null;
+      const currentStatus = existingPlan ? (existingPlan.status || '') : '';
+
       const planData = {
         id: editId || ("plan-" + Date.now()),
         carrier: document.getElementById("formCarrier").value.trim(),
@@ -1114,7 +1180,8 @@
         eventUrl: document.getElementById("formEventUrl").value.trim(),
         options: options.length > 0 ? options : [{ name: '기본 요금제', price: 0 }],
         gifts: gifts,
-        notices: notices
+        notices: notices,
+        status: currentStatus
       };
 
       if (editId) {
@@ -1123,6 +1190,13 @@
       } else {
         window.plansData.unshift(planData);
       }
+
+      // 정렬 유지
+      window.plansData.sort((a, b) => {
+        const dateA = a.eventEndDate || a.startDate || "";
+        const dateB = b.eventEndDate || b.startDate || "";
+        return dateB.localeCompare(dateA);
+      });
 
       await window.saveStorage();
       window.closeAddModal();
@@ -1236,6 +1310,11 @@ ${jsonString}
         if (sanitizedList && sanitizedList.length > 0) {
           if (confirm(`총 ${sanitizedList.length}개의 요금제 데이터를 읽어왔습니다. 복원하시겠습니까?`)) {
             window.plansData = sanitizedList;
+            window.plansData.sort((a, b) => {
+              const dateA = a.eventEndDate || a.startDate || "";
+              const dateB = b.eventEndDate || b.startDate || "";
+              return dateB.localeCompare(dateA);
+            });
             await window.saveStorage();
             renderMainList();
             if (!document.getElementById("detailScreen").classList.contains("hidden") && window.currentPlanId) {
@@ -1282,7 +1361,8 @@ ${jsonString}
           eventUrl: String(item.eventUrl || ""),
           options: opts,
           gifts: gifts,
-          notices: Array.isArray(item.notices) ? item.notices : []
+          notices: Array.isArray(item.notices) ? item.notices : [],
+          status: String(item.status || "")
         });
       });
       return result;
