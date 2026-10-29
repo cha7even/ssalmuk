@@ -58,7 +58,7 @@
   <!-- Top Container -->
   <div id="appContainer" class="w-full max-w-full sm:max-w-md md:max-w-xl min-h-screen bg-[#fbf9f5] border-x border-[#e8e2d5] flex flex-col relative shadow-sm box-border">
 
-    <!-- Admin Nav Tabs -->
+    <!-- Admin Nav Tabs (관리자 모드일 때만 표시) -->
     <div id="adminTabNav" class="hidden w-full bg-white border-b border-ssal-border p-2 flex justify-center gap-2 text-xs font-bold shrink-0">
       <button id="navTabPlans" onclick="switchMainTab('plans')" class="px-4 py-2 rounded-xl bg-[#9e3412] text-white shadow-sm transition">
         <i class="fa-solid fa-list-check mr-1"></i>요금제 계산기
@@ -105,7 +105,7 @@
       <div id="plansList" class="space-y-3"></div>
     </div>
 
-    <!-- ==================== LINE MANAGER SCREEN ==================== -->
+    <!-- ==================== LINE MANAGER SCREEN (관리자 전용) ==================== -->
     <div id="lineManagerScreen" class="w-full flex-1 p-3 sm:p-4 space-y-4 box-border hidden">
       <div class="flex items-center justify-between pt-2 border-b border-ssal-border pb-3">
         <div>
@@ -124,7 +124,6 @@
           <span>보유 회선 종합 요약 대시보드 (<span id="dashCurrentMonthLabel">현재 월</span>)</span>
         </div>
         
-        <!-- 고정 통계 항목: 총 보유회선, 안전유지중, 탈출 임박(7일이내), 탈출 가능 -->
         <div class="grid grid-cols-2 gap-2">
           <div class="bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
             <span class="text-[10px] text-ssal-subText block">총 보유 회선</span>
@@ -144,7 +143,6 @@
           </div>
         </div>
 
-        <!-- 현재 월 기준 3가지 재정 지표 -->
         <div class="pt-2 border-t border-ssal-border space-y-2 text-[11px]">
           <div class="grid grid-cols-2 gap-2">
             <div class="bg-amber-50/70 p-2.5 rounded-xl border border-amber-200">
@@ -621,6 +619,7 @@
     };
 
     window.switchMainTab = function(tabName) {
+      if (!window.isAdminMode) return;
       const plansBtn = document.getElementById("navTabPlans");
       const linesBtn = document.getElementById("navTabLines");
       const mainScreen = document.getElementById("mainScreen");
@@ -644,6 +643,7 @@
     }
 
     window.openLineModalFromPlan = function(event, planId) {
+      if (!window.isAdminMode) return;
       if (event) event.stopPropagation();
       const plan = window.plansData.find(p => p.id === planId);
       if (!plan) return;
@@ -770,19 +770,17 @@
       }
     }
 
-    // 현재 월(YYYY-MM) 기준 특정 회선의 사은품 금액 산출 함수
     window.calculateLineGiftValForCurrentMonth = function(line) {
       if (!line) return 0;
       let sum = 0;
       const today = new Date();
       const currentYM = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
-      // 1. rawGifts 구조가 있는 경우 (요금제에서 자동연동)
       if (line.rawGifts && Array.isArray(line.rawGifts) && line.rawGifts.length > 0 && line.activationDate) {
         const actD = new Date(line.activationDate + "T00:00:00");
         if (!isNaN(actD.getTime())) {
           line.rawGifts.forEach(g => {
-            const giftStartM = g.month || 1; // 1-indexed (M+0 = 1월차)
+            const giftStartM = g.month || 1;
             const giftEndM = g.endMonth || (g.isMonthly ? 12 : giftStartM);
 
             const targetD = new Date(currentYM + "-01T00:00:00");
@@ -802,7 +800,6 @@
         }
       }
 
-      // 2. 텍스트 형태 사은품 내역에서 금액 파싱 (단순 텍스트 기반 차선책)
       if (line.giftsSummary) {
         const matches = line.giftsSummary.match(/([0-9,]+)\s*원/g);
         if (matches) {
@@ -817,6 +814,7 @@
     }
 
     function renderLinesList() {
+      if (!window.isAdminMode) return;
       const container = document.getElementById("linesList");
       document.getElementById("totalLinesCount").innerText = `총 ${window.linesData.length}개 회선 등록됨`;
       container.innerHTML = "";
@@ -839,8 +837,6 @@
 
       window.linesData.forEach(line => {
         totalFee += (line.monthlyFee || 0);
-        
-        // 현재 월 기준 사은품 금액 합산
         const lineMonthGift = window.calculateLineGiftValForCurrentMonth(line);
         totalGiftValForCurrentMonth += lineMonthGift;
 
@@ -852,7 +848,6 @@
 
       const netSsal = totalGiftValForCurrentMonth - totalFee;
 
-      // 대시보드 DOM 반영
       document.getElementById("dashTotalLines").innerText = `${totalLines}개`;
       document.getElementById("dashSafeLines").innerText = `${safeLines}개`;
       document.getElementById("dashUrgentLines").innerText = `${urgentLines}개`;
@@ -1436,6 +1431,7 @@
     }
 
     window.clearFormInputs = function() {
+      if (!window.isAdminMode) return;
       document.getElementById("planForm").reset();
       const today = new Date().toISOString().slice(0, 10);
       document.getElementById("formStartDate").value = today;
@@ -1486,6 +1482,7 @@
     }
 
     window.addFormOptionRow = function(name = "", price = "") {
+      if (!window.isAdminMode) return;
       const container = document.getElementById("formOptionsContainer");
       const div = document.createElement("div");
       div.className = "flex items-center gap-1.5 option-row";
@@ -1498,6 +1495,7 @@
     }
 
     window.addFormGiftRow = function(name = "", cond = "", val = "", startOffset = 0, durationMonths = 1, isMonthly = false) {
+      if (!window.isAdminMode) return;
       const container = document.getElementById("formGiftsContainer");
       const div = document.createElement("div");
       div.className = "bg-white p-2 border border-ssal-border rounded-lg space-y-1.5 gift-row";
@@ -1646,6 +1644,7 @@
     }
 
     window.copyBackupText = function() {
+      if (!window.isAdminMode) return;
       const textarea = document.getElementById("backupTextarea");
       if (!textarea) return;
       textarea.select();
@@ -1677,6 +1676,7 @@
     }
 
     async function processImportedText(text) {
+      if (!window.isAdminMode) return;
       try {
         if (text.charCodeAt(0) === 0xFEFF) text = text.substr(1);
         let parsedObj = JSON.parse(text);
