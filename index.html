@@ -586,11 +586,13 @@
 
       } catch (e) {
         console.error("Firebase 로드 실패:", e);
-        window.plansData = [];
-        window.linesData = [];
       }
+      
+      // 데이터 로드 완료 후 화면 렌더링 강제 실행
       renderMainList();
-      renderLinesList();
+      if (window.isAdminMode) {
+        renderLinesList();
+      }
     }
 
     window.saveStorage = async function() {
@@ -816,6 +818,8 @@
     function renderLinesList() {
       if (!window.isAdminMode) return;
       const container = document.getElementById("linesList");
+      if (!container) return;
+      
       document.getElementById("totalLinesCount").innerText = `총 ${window.linesData.length}개 회선 등록됨`;
       container.innerHTML = "";
 
@@ -998,8 +1002,11 @@
     }
 
     function renderMainList() {
-      document.getElementById("totalPlansCount").innerText = `총 ${window.plansData.length}개 요금제`;
+      const countEl = document.getElementById("totalPlansCount");
+      if (countEl) countEl.innerText = `총 ${window.plansData.length}개 요금제`;
+      
       const container = document.getElementById("plansList");
+      if (!container) return;
       container.innerHTML = "";
 
       if (window.plansData.length === 0) {
