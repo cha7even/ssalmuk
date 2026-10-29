@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Tailwind Config -->
   <script>
     tailwind.config = {
       theme: {
@@ -59,15 +58,22 @@
   <!-- Top Container -->
   <div id="appContainer" class="w-full max-w-full sm:max-w-md md:max-w-xl min-h-screen bg-[#fbf9f5] border-x border-[#e8e2d5] flex flex-col relative shadow-sm box-border">
 
-    <!-- ==================== MAIN SCREEN ==================== -->
+    <!-- Admin Nav Tabs -->
+    <div id="adminTabNav" class="hidden w-full bg-white border-b border-ssal-border p-2 flex justify-center gap-2 text-xs font-bold shrink-0">
+      <button id="navTabPlans" onclick="switchMainTab('plans')" class="px-4 py-2 rounded-xl bg-[#9e3412] text-white shadow-sm transition">
+        <i class="fa-solid fa-list-check mr-1"></i>요금제 계산기
+      </button>
+      <button id="navTabLines" onclick="switchMainTab('lines')" class="px-4 py-2 rounded-xl bg-[#eee9e0] text-ssal-subText hover:bg-[#e2dccf] transition">
+        <i class="fa-solid fa-sim-card mr-1"></i>회선 관리자
+      </button>
+    </div>
+
+    <!-- ==================== MAIN PLAN SCREEN ==================== -->
     <div id="mainScreen" class="w-full flex-1 p-3 sm:p-4 space-y-4 box-border">
       
-      <!-- Top Header Row -->
       <div class="flex items-center justify-between pt-2">
         <h1 class="text-xl sm:text-2xl font-black tracking-tight text-ssal-text">쌀먹 요금제</h1>
-        
         <div class="flex items-center gap-1.5">
-          <!-- 관리자 전용: 새 요금제 추가 버튼 -->
           <button id="adminBtnAddPlan" onclick="openAddModal()" class="px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-white bg-[#9e3412] hover:bg-[#802a0e] rounded-lg shadow-sm transition hidden items-center gap-1 shrink-0">
             <i class="fa-solid fa-plus text-xs"></i>
             <span>새 요금제</span>
@@ -75,16 +81,13 @@
         </div>
       </div>
 
-      <!-- Subtitle -->
       <p class="text-xs text-ssal-subText leading-snug">
         알뜰폰 사은품을 요금제·유지기간 및 종료월 지정, 일할계산을 통해 월별 순이익으로 정확하게 산출합니다.
       </p>
 
-      <!-- Control Bar -->
       <div class="flex items-center justify-between pt-1 pb-1 text-xs">
         <span id="totalPlansCount" class="font-bold text-ssal-subText">총 0개 요금제</span>
         
-        <!-- 관리자 전용: 백업 및 복원 컨트롤 바 -->
         <div id="adminControlBar" class="flex items-center gap-1.5 flex-wrap justify-end hidden">
           <button onclick="exportDataHTML()" title="백업 파일 다운로드 및 복사" class="text-ssal-subText hover:text-ssal-accent transition text-[11px] font-semibold flex items-center gap-1">
             <i class="fa-solid fa-download"></i> 백업
@@ -99,25 +102,87 @@
         </div>
       </div>
 
-      <!-- Plan Cards List -->
-      <div id="plansList" class="space-y-3">
-        <!-- Cards dynamically injected here -->
-      </div>
-      
+      <div id="plansList" class="space-y-3"></div>
     </div>
 
-    <!-- ==================== DETAIL SCREEN ==================== -->
+    <!-- ==================== LINE MANAGER SCREEN ==================== -->
+    <div id="lineManagerScreen" class="w-full flex-1 p-3 sm:p-4 space-y-4 box-border hidden">
+      <div class="flex items-center justify-between pt-2 border-b border-ssal-border pb-3">
+        <div>
+          <h2 class="text-lg font-black text-ssal-text">회선 관리자 (나만의 전용)</h2>
+          <p class="text-[11px] text-ssal-subText">개통된 회선의 탈출일 및 월 청구요금을 실시간으로 관리합니다.</p>
+        </div>
+        <button onclick="openLineModal()" class="px-3 py-1.5 bg-[#9e3412] hover:bg-[#802a0e] text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1">
+          <i class="fa-solid fa-plus"></i> 직접 추가
+        </button>
+      </div>
+
+      <!-- 요약 대시보드 카드 박스 -->
+      <div id="lineSummaryDashboard" class="bg-white rounded-2xl border border-ssal-border p-3.5 space-y-3 shadow-sm text-xs">
+        <div class="font-bold text-ssal-text flex items-center gap-1.5 border-b border-ssal-border pb-2">
+          <i class="fa-solid fa-chart-pie text-ssal-accent"></i>
+          <span>보유 회선 종합 요약 대시보드 (<span id="dashCurrentMonthLabel">현재 월</span>)</span>
+        </div>
+        
+        <!-- 고정 통계 항목: 총 보유회선, 안전유지중, 탈출 임박(7일이내), 탈출 가능 -->
+        <div class="grid grid-cols-2 gap-2">
+          <div class="bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
+            <span class="text-[10px] text-ssal-subText block">총 보유 회선</span>
+            <strong id="dashTotalLines" class="text-sm font-black text-ssal-text">0개</strong>
+          </div>
+          <div class="bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
+            <span class="text-[10px] text-ssal-subText block">안전 유지 중</span>
+            <strong id="dashSafeLines" class="text-sm font-black text-ssal-green">0개</strong>
+          </div>
+          <div class="bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
+            <span class="text-[10px] text-ssal-subText block">탈출 임박 (7일이내)</span>
+            <strong id="dashUrgentLines" class="text-sm font-black text-amber-600">0개</strong>
+          </div>
+          <div class="bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
+            <span class="text-[10px] text-ssal-subText block">탈출 가능 (도래/경과)</span>
+            <strong id="dashReadyLines" class="text-sm font-black text-rose-600">0개</strong>
+          </div>
+        </div>
+
+        <!-- 현재 월 기준 3가지 재정 지표 -->
+        <div class="pt-2 border-t border-ssal-border space-y-2 text-[11px]">
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-amber-50/70 p-2.5 rounded-xl border border-amber-200">
+              <span class="text-[10px] text-amber-900 font-bold block mb-0.5">💸 <span class="dashMonthText">현재 월</span> 총 통신비</span>
+              <strong id="dashTotalFee" class="text-xs sm:text-sm font-black text-amber-950">0원</strong>
+            </div>
+            <div class="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
+              <span class="text-[10px] text-emerald-900 font-bold block mb-0.5">🎁 <span class="dashMonthText">현재 월</span> 총 사은품</span>
+              <strong id="dashTotalGiftVal" class="text-xs sm:text-sm font-black text-emerald-800">+0원</strong>
+            </div>
+          </div>
+
+          <div class="bg-ssal-bg p-3 rounded-xl border border-ssal-border flex justify-between items-center">
+            <span class="font-bold text-ssal-text">🔥 <span class="dashMonthText">현재 월</span> 예상 쌀먹 (사은품 - 통신비)</span>
+            <strong id="dashNetCost" class="text-sm sm:text-base font-black text-ssal-green">+0원</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs pt-1">
+        <span id="totalLinesCount" class="font-bold text-ssal-subText">총 0개 회선 등록됨</span>
+      </div>
+
+      <div id="linesList" class="space-y-3"></div>
+    </div>
+
+    <!-- ==================== PLAN DETAIL SCREEN ==================== -->
     <div id="detailScreen" class="w-full flex-1 p-4 space-y-4 hidden">
-      
-      <!-- Top Navigation -->
       <div class="flex items-center justify-between border-b border-ssal-border pb-3">
         <button onclick="showMainScreen()" class="px-3 py-1.5 bg-[#eee9e0] hover:bg-[#e2dccf] text-ssal-text rounded-lg text-xs font-bold transition flex items-center gap-1.5">
           <i class="fa-solid fa-arrow-left"></i>
           <span>목록으로</span>
         </button>
 
-        <!-- 관리자 전용: 상세 화면 제어 버튼들 (복사, 수정, 삭제) -->
         <div id="adminDetailActionBtns" class="flex items-center gap-1.5 hidden">
+          <button id="btnDetailAddLine" class="px-2.5 py-1.5 text-xs font-bold text-white bg-ssal-green hover:bg-emerald-800 rounded-lg transition flex items-center gap-1">
+            <i class="fa-solid fa-mobile-screen-button"></i> 회선 추가
+          </button>
           <button id="btnClonePlan" class="px-2.5 py-1.5 text-xs font-semibold text-ssal-subText bg-[#eee9e0] hover:bg-[#e2dccf] rounded-lg transition">
             <i class="fa-regular fa-copy"></i> 복사
           </button>
@@ -130,15 +195,10 @@
         </div>
       </div>
 
-      <!-- Detail Card Top Header -->
       <div class="space-y-2">
         <div class="flex items-start justify-between gap-2">
-          <h2 id="detailTitle" class="text-base font-extrabold text-ssal-text leading-snug">
-            -
-          </h2>
-          <span id="detailCarrierBadge" class="shrink-0 px-2.5 py-1 text-xs font-semibold bg-[#eee9e0] text-ssal-subText rounded-full">
-            -
-          </span>
+          <h2 id="detailTitle" class="text-base font-extrabold text-ssal-text leading-snug">-</h2>
+          <span id="detailCarrierBadge" class="shrink-0 px-2.5 py-1 text-xs font-semibold bg-[#eee9e0] text-ssal-subText rounded-full">-</span>
         </div>
 
         <div class="text-xs text-ssal-subText flex items-center justify-between pt-0.5">
@@ -156,16 +216,12 @@
         </button>
       </div>
 
-      <!-- Section: 요약 -->
       <div class="space-y-2 pt-1">
         <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">요약</h3>
         
-        <!-- Dropdown Plan Option Select -->
         <select id="detailSubPlanSelect" onchange="onDetailOptionChange()" class="w-full bg-white border border-ssal-border text-ssal-text text-xs rounded-xl p-2.5 font-bold focus:outline-none focus:border-ssal-borderDark shadow-sm">
-          <!-- Options injected -->
         </select>
 
-        <!-- 최대 순이익 요약 카드 및 누적 순이익 테이블 -->
         <div id="maxProfitTableBox" class="bg-white rounded-xl border border-emerald-200 p-3.5 text-xs space-y-2.5 shadow-sm">
           <div class="flex items-center justify-between border-b border-emerald-100 pb-2">
             <div>
@@ -183,39 +239,28 @@
             </div>
           </div>
 
-          <!-- 가로 스크롤 가능한 월별 누적 분석 테이블 -->
           <div class="overflow-x-auto custom-scrollbar pt-0.5">
             <table id="maxProfitTable" class="w-full text-center text-[11px] border-collapse min-w-max">
-              <!-- Dynamically rendered -->
             </table>
           </div>
         </div>
-
       </div>
 
-      <!-- Section: 사은품 목록 -->
       <div class="space-y-2 pt-2">
         <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">사은품 목록 및 지급 구간</h3>
         <p class="text-[11px] text-ssal-subText leading-tight">
           시작월 및 유지기간 설정이 적용된 사은품 지급 항목입니다.
         </p>
-
-        <div id="detailGiftsList" class="space-y-1.5 text-xs">
-          <!-- Gift Items Injected -->
-        </div>
+        <div id="detailGiftsList" class="space-y-1.5 text-xs"></div>
       </div>
 
-      <!-- Section: 유의사항 -->
       <div class="space-y-2 pt-2">
         <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">유의사항</h3>
         <div class="bg-white rounded-xl border border-ssal-border p-3 text-[11px] text-ssal-subText space-y-1.5 leading-relaxed shadow-sm">
-          <ul id="detailNoticesList" class="list-disc list-inside space-y-1 text-ssal-subText">
-            <!-- Notices injected -->
-          </ul>
+          <ul id="detailNoticesList" class="list-disc list-inside space-y-1 text-ssal-subText"></ul>
         </div>
       </div>
 
-      <!-- Section: 요금제 스펙 정보 -->
       <div class="space-y-2 pt-2">
         <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">요금제 스펙</h3>
         <div id="detailPlanSpecBox" class="bg-white rounded-xl border border-ssal-border p-3 text-xs space-y-1.5 shadow-sm">
@@ -230,20 +275,13 @@
         </div>
       </div>
 
-      <!-- Section: 월별 계산 -->
       <div class="space-y-2 pt-2">
         <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">유지 기간별 시뮬레이션</h3>
-        
         <select id="detailSubPlanSelect2" onchange="syncOptionSelect(this.value)" class="w-full bg-white border border-ssal-border text-ssal-text text-xs rounded-xl p-2.5 font-bold">
-          <!-- Options injected -->
         </select>
 
-        <!-- Month Grid Buttons -->
-        <div id="monthTabsContainer" class="grid grid-cols-4 gap-1.5">
-          <!-- 1개월~12개월 buttons injected -->
-        </div>
+        <div id="monthTabsContainer" class="grid grid-cols-4 gap-1.5"></div>
 
-        <!-- Month Summary Card -->
         <div class="bg-white rounded-xl border border-ssal-border p-3.5 space-y-2 text-xs shadow-sm">
           <div class="flex justify-between items-center border-b border-ssal-border pb-2">
             <span class="font-bold text-ssal-subText">유지기간</span>
@@ -280,27 +318,21 @@
         </div>
       </div>
 
-      <!-- Section: 월별 상세 Breakdown Timeline -->
       <div class="space-y-2 pt-2">
         <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">월별 상세 계산 타임라인</h3>
-
-        <div id="timelineContainer" class="space-y-2">
-          <!-- Timeline month cards injected -->
-        </div>
+        <div id="timelineContainer" class="space-y-2"></div>
       </div>
 
-      <!-- Bottom Spacer -->
       <div class="h-10"></div>
     </div>
 
   </div>
 
-  <!-- ==================== ADD / EDIT MODAL ==================== -->
+  <!-- ==================== ADD / EDIT PLAN MODAL ==================== -->
   <div id="planModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
     <div class="bg-[#fbf9f5] rounded-2xl max-w-lg w-full max-h-[80vh] sm:max-h-[85vh] flex flex-col shadow-2xl border border-ssal-border overflow-hidden my-auto">
       <input type="hidden" id="formEditId" value="">
       
-      <!-- Modal Header -->
       <div class="px-4 py-3 bg-white border-b border-ssal-border flex items-center justify-between shrink-0">
         <h3 id="modalHeaderTitle" class="font-bold text-sm text-ssal-text">새 요금제 추가</h3>
         <div class="flex items-center gap-2">
@@ -314,13 +346,8 @@
         </div>
       </div>
 
-      <!-- Form Container Wrapper -->
       <form id="planForm" onsubmit="savePlanForm(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
-
-        <!-- Modal Scrollable Content Body -->
         <div class="p-4 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
-
-          <!-- Manual Edit Form Fields -->
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block font-bold text-ssal-subText mb-1">통신사</label>
@@ -337,7 +364,6 @@
             <input type="text" id="formTitle" required placeholder="예: [갤럭시자급제] 매월 3만원x8개월..." class="w-full p-2 bg-white border border-ssal-border rounded-lg">
           </div>
 
-          <!-- 이벤트 기간 설정 -->
           <div class="bg-white p-3 rounded-xl border border-ssal-border space-y-2">
             <label class="block font-bold text-ssal-text">📅 이벤트 기간 설정</label>
             <div class="grid grid-cols-2 gap-2">
@@ -352,7 +378,6 @@
             </div>
           </div>
 
-          <!-- 개통일 설정 (일할계산 기준) -->
           <div class="bg-white p-3 rounded-xl border border-ssal-border space-y-2">
             <label class="block font-bold text-ssal-text">📱 개통일 설정 <span class="text-[10px] text-ssal-accent">*1M 일할기준</span></label>
             <div>
@@ -365,7 +390,6 @@
             <input type="url" id="formEventUrl" placeholder="https://..." class="w-full p-2 bg-white border border-ssal-border rounded-lg">
           </div>
 
-          <!-- Sub Plans / Options -->
           <div class="border-t border-ssal-border pt-3 space-y-2">
             <div class="flex items-center justify-between">
               <label class="font-bold text-ssal-text">요금제 옵션 목록</label>
@@ -373,12 +397,9 @@
                 + 옵션 추가
               </button>
             </div>
-            <div id="formOptionsContainer" class="space-y-2">
-              <!-- Sub plan rows -->
-            </div>
+            <div id="formOptionsContainer" class="space-y-2"></div>
           </div>
 
-          <!-- Gifts -->
           <div class="border-t border-ssal-border pt-3 space-y-2">
             <div class="flex items-center justify-between">
               <label class="font-bold text-ssal-text">사은품 목록 및 지급월 설정</label>
@@ -386,20 +407,15 @@
                 + 사은품 추가
               </button>
             </div>
-            <div id="formGiftsContainer" class="space-y-2">
-              <!-- Gift rows -->
-            </div>
+            <div id="formGiftsContainer" class="space-y-2"></div>
           </div>
 
-          <!-- Notices -->
           <div class="border-t border-ssal-border pt-3 pb-2">
             <label class="block font-bold text-ssal-subText mb-1">유의사항 (줄바꿈 구분)</label>
             <textarea id="formNotices" rows="3" placeholder="지급 조건, 혜택 제외 대상 등..." class="w-full p-2 bg-white border border-ssal-border rounded-lg resize-none"></textarea>
           </div>
-
         </div>
 
-        <!-- Modal Fixed Bottom Action Bar -->
         <div class="p-3 bg-white border-t border-ssal-border flex justify-between items-center shrink-0">
           <button type="button" onclick="clearFormInputs()" class="px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold rounded-xl text-xs transition">
             <i class="fa-solid fa-eraser mr-1"></i>전체 비우기
@@ -409,13 +425,73 @@
             <button type="submit" class="px-5 py-2 bg-[#9e3412] text-white font-bold rounded-xl text-xs shadow-sm hover:bg-[#802a0e] transition">저장하기</button>
           </div>
         </div>
-
       </form>
-
     </div>
   </div>
 
-  <!-- ==================== BACKUP / RESTORE TEXT MODAL ==================== -->
+  <!-- ==================== LINE ADD/EDIT MODAL ==================== -->
+  <div id="lineModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#fbf9f5] rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-ssal-border overflow-hidden my-auto">
+      <input type="hidden" id="lineEditId" value="">
+      
+      <div class="px-4 py-3 bg-white border-b border-ssal-border flex items-center justify-between shrink-0">
+        <h3 id="lineModalHeaderTitle" class="font-bold text-sm text-ssal-text">회선 추가</h3>
+        <button onclick="closeLineModal()" class="w-7 h-7 rounded-full hover:bg-ssal-bg text-ssal-subText flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="lineForm" onsubmit="saveLineForm(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="p-4 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
+
+          <div>
+            <label class="block font-bold text-ssal-subText mb-1">회선 별칭 (직접 입력)</label>
+            <input type="text" id="lineAlias" required placeholder="예: 메인폰_KT, 서브_리니지01 등" class="w-full p-2.5 bg-white border border-ssal-border rounded-xl font-bold text-ssal-text">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold text-ssal-subText mb-1">통신사 (요금제 자동연동)</label>
+              <input type="text" id="lineCarrier" required placeholder="통신사명" class="w-full p-2 bg-white border border-ssal-border rounded-lg font-semibold">
+            </div>
+            <div>
+              <label class="block font-bold text-ssal-subText mb-1">월 청구 요금 (자동연동)</label>
+              <input type="number" id="lineMonthlyFee" required placeholder="0" class="w-full p-2 bg-white border border-ssal-border rounded-lg font-bold text-ssal-accent">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 bg-white p-3 rounded-xl border border-ssal-border">
+            <div>
+              <label class="block font-bold text-ssal-subText mb-1">개통 가입일 (선택)</label>
+              <input type="date" id="lineActivationDate" required class="w-full p-2 bg-ssal-bg border border-ssal-border rounded-lg font-semibold">
+            </div>
+            <div>
+              <label class="block font-bold text-ssal-subText mb-1">탈출 예정일자 (선택)</label>
+              <input type="date" id="lineTargetDate" required class="w-full p-2 bg-ssal-bg border border-ssal-border rounded-lg font-semibold text-ssal-accent">
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-ssal-subText mb-1">사은품 목록 및 혜택 (자동연동)</label>
+            <textarea id="lineGiftsSummary" rows="3" placeholder="사은품 목록 및 수령 조건 내용..." class="w-full p-2.5 bg-white border border-ssal-border rounded-xl resize-none text-[11px]"></textarea>
+          </div>
+
+          <div>
+            <label class="block font-bold text-ssal-subText mb-1">메모 / 특이사항</label>
+            <textarea id="lineMemo" rows="3" placeholder="예: M+3월 상품권 수령 예정, 유심 번호 등..." class="w-full p-2.5 bg-white border border-ssal-border rounded-xl resize-none"></textarea>
+          </div>
+
+        </div>
+
+        <div class="p-3 bg-white border-t border-ssal-border flex justify-end gap-2 shrink-0">
+          <button type="button" onclick="closeLineModal()" class="px-4 py-2 bg-[#eee9e0] text-ssal-subText font-bold rounded-xl text-xs">취소</button>
+          <button type="submit" class="px-5 py-2 bg-[#9e3412] text-white font-bold rounded-xl text-xs shadow-sm hover:bg-[#802a0e] transition">저장하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- BACKUP MODAL -->
   <div id="textBackupModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-4 space-y-3 shadow-2xl border border-ssal-border text-xs">
       <div class="flex justify-between items-center">
@@ -425,9 +501,7 @@
       <p class="text-ssal-subText text-[11px] leading-relaxed">
         복원할 백업 코드를 아래 상자에 붙여넣은 뒤 [이 코드로 복원] 버튼을 누르세요.
       </p>
-
       <textarea id="backupTextarea" rows="6" placeholder="백업 코드를 여기에 붙여넣으세요..." class="w-full p-2.5 bg-ssal-bg border border-ssal-border rounded-xl font-mono text-[11px] focus:outline-none focus:border-ssal-accent resize-none"></textarea>
-
       <div class="flex justify-between items-center pt-1 gap-2">
         <button type="button" onclick="copyBackupText()" class="px-3 py-2 bg-[#f2ede4] hover:bg-[#e8e2d5] text-ssal-text font-bold rounded-xl text-xs flex items-center gap-1">
           <i class="fa-regular fa-copy"></i> 코드 복사
@@ -439,26 +513,28 @@
     </div>
   </div>
 
-  <!-- Firebase SDK 및 앱 로직 통합 -->
+  <!-- Firebase Integration Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyDnKOnOEjoZOOJpK2T2mpyRmJr5s2Kkdmo",
-  authDomain: "ssalmuk-85f02.firebaseapp.com",
-  projectId: "ssalmuk-85f02",
-  storageBucket: "ssalmuk-85f02.firebasestorage.app",
-  messagingSenderId: "532509805583",
-  appId: "1:532509805583:web:330851850017d5b0b4a77a",
-  measurementId: "G-BE9RM11SZW"
-};
+      apiKey: "AIzaSyDnKOnOEjoZOOJpK2T2mpyRmJr5s2Kkdmo",
+      authDomain: "ssalmuk-85f02.firebaseapp.com",
+      projectId: "ssalmuk-85f02",
+      storageBucket: "ssalmuk-85f02.firebasestorage.app",
+      messagingSenderId: "532509805583",
+      appId: "1:532509805583:web:330851850017d5b0b4a77a",
+      measurementId: "G-BE9RM11SZW"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const plansCollection = collection(db, "ssalmuk_plans");
+    const linesCollection = collection(db, "ssalmuk_lines");
 
     window.plansData = [];
+    window.linesData = [];
     window.currentPlanId = null;
     window.currentSelectedOptionIdx = 0;
     window.currentSelectedMonth = 10;
@@ -477,15 +553,18 @@
       const addPlanBtn = document.getElementById("adminBtnAddPlan");
       const controlBar = document.getElementById("adminControlBar");
       const detailActionBtns = document.getElementById("adminDetailActionBtns");
+      const adminTabNav = document.getElementById("adminTabNav");
 
       if (window.isAdminMode) {
         if (addPlanBtn) { addPlanBtn.classList.remove("hidden"); addPlanBtn.classList.add("flex"); }
         if (controlBar) { controlBar.classList.remove("hidden"); controlBar.classList.add("flex"); }
         if (detailActionBtns) { detailActionBtns.classList.remove("hidden"); detailActionBtns.classList.add("flex"); }
+        if (adminTabNav) { adminTabNav.classList.remove("hidden"); }
       } else {
         if (addPlanBtn) addPlanBtn.classList.add("hidden");
         if (controlBar) controlBar.classList.add("hidden");
         if (detailActionBtns) detailActionBtns.classList.add("hidden");
+        if (adminTabNav) adminTabNav.classList.add("hidden");
       }
     }
 
@@ -493,23 +572,27 @@
       try {
         const querySnapshot = await getDocs(plansCollection);
         const loadedPlans = [];
-        querySnapshot.forEach((docSnap) => {
-          loadedPlans.push(docSnap.data());
-        });
+        querySnapshot.forEach((docSnap) => loadedPlans.push(docSnap.data()));
 
-        // 1. 이벤트 종료일이 늦을수록 앞에 오도록 정렬 (내림차순 정렬)
         loadedPlans.sort((a, b) => {
           const dateA = a.eventEndDate || a.startDate || "";
           const dateB = b.eventEndDate || b.startDate || "";
           return dateB.localeCompare(dateA);
         });
-
         window.plansData = loadedPlans;
+
+        const linesSnapshot = await getDocs(linesCollection);
+        const loadedLines = [];
+        linesSnapshot.forEach((docSnap) => loadedLines.push(docSnap.data()));
+        window.linesData = loadedLines;
+
       } catch (e) {
         console.error("Firebase 로드 실패:", e);
         window.plansData = [];
+        window.linesData = [];
       }
       renderMainList();
+      renderLinesList();
     }
 
     window.saveStorage = async function() {
@@ -522,10 +605,333 @@
       }
     }
 
+    window.saveLinesStorage = async function() {
+      try {
+        for (const line of window.linesData) {
+          await setDoc(doc(db, "ssalmuk_lines", line.id), line);
+        }
+      } catch (e) {
+        console.error("회선 데이터 저장 오류:", e);
+      }
+    }
+
     window.onload = async function() {
       applyAdminUIMode();
       await loadStorage();
     };
+
+    window.switchMainTab = function(tabName) {
+      const plansBtn = document.getElementById("navTabPlans");
+      const linesBtn = document.getElementById("navTabLines");
+      const mainScreen = document.getElementById("mainScreen");
+      const lineScreen = document.getElementById("lineManagerScreen");
+      const detailScreen = document.getElementById("detailScreen");
+
+      detailScreen.classList.add("hidden");
+
+      if (tabName === 'plans') {
+        mainScreen.classList.remove("hidden");
+        lineScreen.classList.add("hidden");
+        plansBtn.className = "px-4 py-2 rounded-xl bg-[#9e3412] text-white shadow-sm transition";
+        linesBtn.className = "px-4 py-2 rounded-xl bg-[#eee9e0] text-ssal-subText hover:bg-[#e2dccf] transition";
+      } else {
+        mainScreen.classList.add("hidden");
+        lineScreen.classList.remove("hidden");
+        linesBtn.className = "px-4 py-2 rounded-xl bg-[#9e3412] text-white shadow-sm transition";
+        plansBtn.className = "px-4 py-2 rounded-xl bg-[#eee9e0] text-ssal-subText hover:bg-[#e2dccf] transition";
+        renderLinesList();
+      }
+    }
+
+    window.openLineModalFromPlan = function(event, planId) {
+      if (event) event.stopPropagation();
+      const plan = window.plansData.find(p => p.id === planId);
+      if (!plan) return;
+
+      const opt = (plan.options && plan.options[0]) ? plan.options[0] : { price: 0 };
+      const giftSummary = (plan.gifts || []).map(g => `${g.name} (${window.fmt(g.val)}원 / M+${g.month - 1}월)`).join('\n');
+
+      window.openLineModal(null, {
+        carrier: plan.carrier || '',
+        monthlyFee: opt.price || 0,
+        giftsSummary: giftSummary,
+        rawGifts: plan.gifts || [],
+        activationDate: plan.activationDate || new Date().toISOString().slice(0, 10)
+      });
+    }
+
+    window.openLineModal = function(editId = null, defaultData = null) {
+      if (!window.isAdminMode) return;
+      document.getElementById("lineForm").reset();
+      document.getElementById("lineEditId").value = editId || "";
+
+      if (editId) {
+        const line = window.linesData.find(l => l.id === editId);
+        document.getElementById("lineModalHeaderTitle").innerText = "회선 수정";
+        document.getElementById("lineAlias").value = line.alias || "";
+        document.getElementById("lineCarrier").value = line.carrier || "";
+        document.getElementById("lineMonthlyFee").value = line.monthlyFee || 0;
+        document.getElementById("lineActivationDate").value = line.activationDate || "";
+        document.getElementById("lineTargetDate").value = line.targetDate || "";
+        document.getElementById("lineGiftsSummary").value = line.giftsSummary || "";
+        document.getElementById("lineMemo").value = line.memo || "";
+      } else if (defaultData) {
+        document.getElementById("lineModalHeaderTitle").innerText = "회선 추가 (요금제 연동)";
+        document.getElementById("lineCarrier").value = defaultData.carrier || "";
+        document.getElementById("lineMonthlyFee").value = defaultData.monthlyFee || 0;
+        document.getElementById("lineGiftsSummary").value = defaultData.giftsSummary || "";
+        document.getElementById("lineActivationDate").value = defaultData.activationDate || new Date().toISOString().slice(0, 10);
+        
+        const d = new Date(document.getElementById("lineActivationDate").value);
+        d.setMonth(d.getMonth() + 6);
+        document.getElementById("lineTargetDate").value = d.toISOString().slice(0, 10);
+        window.tempRawGifts = defaultData.rawGifts || [];
+      } else {
+        document.getElementById("lineModalHeaderTitle").innerText = "신규 회선 추가";
+        const today = new Date().toISOString().slice(0, 10);
+        document.getElementById("lineActivationDate").value = today;
+        const d = new Date();
+        d.setMonth(d.getMonth() + 6);
+        document.getElementById("lineTargetDate").value = d.toISOString().slice(0, 10);
+        window.tempRawGifts = [];
+      }
+
+      document.getElementById("lineModal").classList.remove("hidden");
+    }
+
+    window.closeLineModal = function() {
+      document.getElementById("lineModal").classList.add("hidden");
+    }
+
+    window.saveLineForm = async function(e) {
+      e.preventDefault();
+      if (!window.isAdminMode) return;
+
+      const editId = document.getElementById("lineEditId").value;
+      const existingLine = editId ? window.linesData.find(l => l.id === editId) : null;
+
+      const lineData = {
+        id: editId || ("line-" + Date.now()),
+        alias: document.getElementById("lineAlias").value.trim(),
+        carrier: document.getElementById("lineCarrier").value.trim(),
+        monthlyFee: parseInt(document.getElementById("lineMonthlyFee").value, 10) || 0,
+        activationDate: document.getElementById("lineActivationDate").value,
+        targetDate: document.getElementById("lineTargetDate").value,
+        giftsSummary: document.getElementById("lineGiftsSummary").value.trim(),
+        rawGifts: window.tempRawGifts || (existingLine ? existingLine.rawGifts : []),
+        memo: document.getElementById("lineMemo").value.trim(),
+      };
+
+      if (editId) {
+        const idx = window.linesData.findIndex(l => l.id === editId);
+        if (idx >= 0) window.linesData[idx] = lineData;
+      } else {
+        window.linesData.unshift(lineData);
+      }
+
+      window.tempRawGifts = null;
+
+      await window.saveLinesStorage();
+      window.closeLineModal();
+      window.switchMainTab('lines');
+    }
+
+    window.deleteLine = async function(id) {
+      if (!window.isAdminMode) return;
+      if (confirm("이 회선을 삭제하시겠습니까?")) {
+        window.linesData = window.linesData.filter(l => l.id !== id);
+        try {
+          await deleteDoc(doc(db, "ssalmuk_lines", id));
+        } catch(e) {
+          console.error("회선 삭제 실패:", e);
+        }
+        renderLinesList();
+      }
+    }
+
+    window.getLineStatusInfo = function(targetDateStr) {
+      if (!targetDateStr) return { text: '일정 미지정', class: 'bg-gray-100 text-gray-600', code: 'none' };
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const target = new Date(targetDateStr + "T00:00:00");
+      
+      const diffTime = target.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 7) {
+        return { text: `약정 유지 중 (D-${diffDays})`, class: 'bg-emerald-100 text-emerald-800', code: 'safe' };
+      } else if (diffDays > 0) {
+        return { text: `탈출 임박! (D-${diffDays})`, class: 'bg-amber-100 text-amber-800 font-bold', code: 'urgent' };
+      } else if (diffDays === 0) {
+        return { text: `D-DAY 오늘 탈출가능!`, class: 'bg-rose-600 text-white font-black animate-pulse', code: 'ready' };
+      } else {
+        return { text: `만료/탈출 초과 (+${Math.abs(diffDays)}일)`, class: 'bg-rose-100 text-rose-700 font-bold', code: 'ready' };
+      }
+    }
+
+    // 현재 월(YYYY-MM) 기준 특정 회선의 사은품 금액 산출 함수
+    window.calculateLineGiftValForCurrentMonth = function(line) {
+      if (!line) return 0;
+      let sum = 0;
+      const today = new Date();
+      const currentYM = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+      // 1. rawGifts 구조가 있는 경우 (요금제에서 자동연동)
+      if (line.rawGifts && Array.isArray(line.rawGifts) && line.rawGifts.length > 0 && line.activationDate) {
+        const actD = new Date(line.activationDate + "T00:00:00");
+        if (!isNaN(actD.getTime())) {
+          line.rawGifts.forEach(g => {
+            const giftStartM = g.month || 1; // 1-indexed (M+0 = 1월차)
+            const giftEndM = g.endMonth || (g.isMonthly ? 12 : giftStartM);
+
+            const targetD = new Date(currentYM + "-01T00:00:00");
+            const monthDiff = (targetD.getFullYear() - actD.getFullYear()) * 12 + (targetD.getMonth() - actD.getMonth()) + 1;
+
+            if (g.isMonthly) {
+              if (monthDiff >= giftStartM && monthDiff <= giftEndM) {
+                sum += (g.val || 0);
+              }
+            } else {
+              if (monthDiff === giftStartM) {
+                sum += (g.val || 0);
+              }
+            }
+          });
+          return sum;
+        }
+      }
+
+      // 2. 텍스트 형태 사은품 내역에서 금액 파싱 (단순 텍스트 기반 차선책)
+      if (line.giftsSummary) {
+        const matches = line.giftsSummary.match(/([0-9,]+)\s*원/g);
+        if (matches) {
+          matches.forEach(m => {
+            const num = parseInt(m.replace(/[^0-9]/g, ''), 10);
+            if (!isNaN(num)) sum += num;
+          });
+        }
+      }
+
+      return sum;
+    }
+
+    function renderLinesList() {
+      const container = document.getElementById("linesList");
+      document.getElementById("totalLinesCount").innerText = `총 ${window.linesData.length}개 회선 등록됨`;
+      container.innerHTML = "";
+
+      const today = new Date();
+      const currentMonthNum = today.getMonth() + 1;
+      const monthDisplayLabel = `${currentMonthNum}월`;
+
+      document.getElementById("dashCurrentMonthLabel").innerText = monthDisplayLabel;
+      document.querySelectorAll(".dashMonthText").forEach(el => {
+        el.innerText = monthDisplayLabel;
+      });
+
+      let totalLines = window.linesData.length;
+      let readyLines = 0;
+      let urgentLines = 0;
+      let safeLines = 0;
+      let totalFee = 0;
+      let totalGiftValForCurrentMonth = 0;
+
+      window.linesData.forEach(line => {
+        totalFee += (line.monthlyFee || 0);
+        
+        // 현재 월 기준 사은품 금액 합산
+        const lineMonthGift = window.calculateLineGiftValForCurrentMonth(line);
+        totalGiftValForCurrentMonth += lineMonthGift;
+
+        const st = window.getLineStatusInfo(line.targetDate);
+        if (st.code === 'ready') readyLines++;
+        else if (st.code === 'urgent') urgentLines++;
+        else if (st.code === 'safe') safeLines++;
+      });
+
+      const netSsal = totalGiftValForCurrentMonth - totalFee;
+
+      // 대시보드 DOM 반영
+      document.getElementById("dashTotalLines").innerText = `${totalLines}개`;
+      document.getElementById("dashSafeLines").innerText = `${safeLines}개`;
+      document.getElementById("dashUrgentLines").innerText = `${urgentLines}개`;
+      document.getElementById("dashReadyLines").innerText = `${readyLines}개`;
+      
+      document.getElementById("dashTotalFee").innerText = `${window.fmt(totalFee)}원`;
+      document.getElementById("dashTotalGiftVal").innerText = `+${window.fmt(totalGiftValForCurrentMonth)}원`;
+      
+      const netCostEl = document.getElementById("dashNetCost");
+      if (netSsal >= 0) {
+        netCostEl.innerText = `+${window.fmt(netSsal)}원`;
+        netCostEl.className = "text-sm sm:text-base font-black text-ssal-green";
+      } else {
+        netCostEl.innerText = `${window.fmt(netSsal)}원`;
+        netCostEl.className = "text-sm sm:text-base font-black text-rose-600";
+      }
+
+      if (totalLines === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl border border-ssal-border p-8 text-center text-ssal-subText text-xs space-y-2">
+            <i class="fa-solid fa-mobile-screen text-3xl text-ssal-borderDark"></i>
+            <div class="font-bold text-ssal-text">등록된 회선이 없습니다.</div>
+            <p class="text-[11px]">요금제 화면에서 [회선 관리자에 추가] 버튼을 눌러 손쉽게 등록해 보세요.</p>
+          </div>
+        `;
+        return;
+      }
+
+      window.linesData.forEach(line => {
+        const statusInfo = window.getLineStatusInfo(line.targetDate);
+        const thisMonthGift = window.calculateLineGiftValForCurrentMonth(line);
+
+        container.innerHTML += `
+          <div class="bg-white rounded-2xl border border-ssal-border p-4 shadow-sm space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md ${statusInfo.class}">${statusInfo.text}</span>
+                <h3 class="text-base font-extrabold text-ssal-text mt-1">${line.alias}</h3>
+              </div>
+              <span class="shrink-0 px-2.5 py-1 text-xs font-semibold bg-[#eee9e0] text-ssal-subText rounded-full">${line.carrier}</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
+              <div>
+                <span class="text-ssal-subText block text-[10px]">월 청구 요금</span>
+                <strong class="text-ssal-accent font-extrabold text-sm">${window.fmt(line.monthlyFee)}원</strong>
+              </div>
+              <div>
+                <span class="text-ssal-subText block text-[10px]">${monthDisplayLabel} 수령 사은품</span>
+                <strong class="text-emerald-800 font-extrabold text-sm">+${window.fmt(thisMonthGift)}원</strong>
+              </div>
+              <div class="col-span-2 border-t border-ssal-border/60 pt-1.5 flex justify-between items-center">
+                <span class="text-ssal-subText text-[10px]">개통 가입일: <strong>${line.activationDate}</strong></span>
+                <span class="text-ssal-subText text-[10px]">탈출 예정: <strong class="text-ssal-text font-bold">${line.targetDate}</strong></span>
+              </div>
+            </div>
+
+            ${line.giftsSummary ? `
+              <div class="text-[11px] text-ssal-subText bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
+                <strong class="text-emerald-900 block text-[10px] mb-0.5"><i class="fa-solid fa-gift mr-1"></i>전체 사은품 내역</strong>
+                <pre class="whitespace-pre-wrap font-sans text-[11px]">${line.giftsSummary}</pre>
+              </div>
+            ` : ''}
+
+            ${line.memo ? `
+              <div class="text-[11px] text-ssal-subText bg-amber-50/40 p-2 rounded-lg border border-amber-100">
+                <strong class="text-amber-900 block text-[10px] mb-0.5"><i class="fa-regular fa-sticky-note mr-1"></i>메모/특이사항</strong>
+                <div>${line.memo}</div>
+              </div>
+            ` : ''}
+
+            <div class="flex justify-end gap-1.5 pt-1 border-t border-ssal-border/60 text-xs">
+              <button onclick="openLineModal('${line.id}')" class="px-2.5 py-1 bg-[#eee9e0] hover:bg-[#e2dccf] text-ssal-text font-bold rounded-lg transition">수정</button>
+              <button onclick="deleteLine('${line.id}')" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-lg transition">삭제</button>
+            </div>
+          </div>
+        `;
+      });
+    }
 
     window.deletePlan = async function(id) {
       if (!window.isAdminMode) return;
@@ -552,19 +958,16 @@
       showMainScreen();
     }
 
-    // 2. 종료 / 조기종료 상태 토글 함수 (관리자 전용)
     window.togglePlanStatus = async function(event, id, statusType) {
-      event.stopPropagation(); // 카드 클릭 상세페이지 이동 방지
+      event.stopPropagation();
       if (!window.isAdminMode) return;
-
       const plan = window.plansData.find(p => p.id === id);
       if (!plan) return;
 
-      // 이미 같은 상태면 해제(''), 아니면 해당 상태로 변경
       if (plan.status === statusType) {
         plan.status = '';
       } else {
-        plan.status = statusType; // 'ended' 또는 'earlyEnded'
+        plan.status = statusType;
       }
 
       await window.saveStorage();
@@ -650,15 +1053,12 @@
         const netAvg = Math.round(maxNetSoFar / bestMonth);
         const bestMonthLabel = window.getMonthLabel(actDate, bestMonth);
 
-        // 종료 또는 조기종료 상태 체크 및 스타일 지정
         const isEnded = plan.status === 'ended';
         const isEarlyEnded = plan.status === 'earlyEnded';
         const hasEndedStatus = isEnded || isEarlyEnded;
 
-        // 투명도(희미하게) 및 배경 스타일 처리
         const cardOpacityClass = hasEndedStatus ? 'opacity-40 bg-gray-50' : 'bg-white';
         
-        // 상태 뱃지 HTML 생성
         let statusBadgeHtml = '';
         if (isEnded) {
           statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-md">종료</span>`;
@@ -666,20 +1066,20 @@
           statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-md">조기종료</span>`;
         }
 
-        // 관리자용 종료/조기종료 버튼 HTML 생성
         let adminStatusButtonsHtml = '';
         if (window.isAdminMode) {
           const endedBtnStyle = isEnded ? 'bg-rose-600 text-white font-bold' : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
           const earlyBtnStyle = isEarlyEnded ? 'bg-amber-600 text-white font-bold' : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
 
           adminStatusButtonsHtml = `
-            <div class="flex items-center gap-1 pt-1.5 border-t border-ssal-border/60 justify-end" onclick="event.stopPropagation()">
-              <button onclick="togglePlanStatus(event, '${plan.id}', 'ended')" class="px-2 py-1 text-[10px] rounded transition ${endedBtnStyle}">
-                종료
+            <div class="flex items-center justify-between pt-2 border-t border-ssal-border/60" onclick="event.stopPropagation()">
+              <button onclick="openLineModalFromPlan(event, '${plan.id}')" class="px-2.5 py-1 text-[11px] font-bold text-ssal-green bg-emerald-50 hover:bg-emerald-100 rounded-lg transition border border-emerald-200 flex items-center gap-1">
+                <i class="fa-solid fa-plus"></i> 회선 관리자에 추가
               </button>
-              <button onclick="togglePlanStatus(event, '${plan.id}', 'earlyEnded')" class="px-2 py-1 text-[10px] rounded transition ${earlyBtnStyle}">
-                조기종료
-              </button>
+              <div class="flex gap-1">
+                <button onclick="togglePlanStatus(event, '${plan.id}', 'ended')" class="px-2 py-1 text-[10px] rounded transition ${endedBtnStyle}">종료</button>
+                <button onclick="togglePlanStatus(event, '${plan.id}', 'earlyEnded')" class="px-2 py-1 text-[10px] rounded transition ${earlyBtnStyle}">조기종료</button>
+              </div>
             </div>
           `;
         }
@@ -688,14 +1088,10 @@
           <div onclick="showDetailScreen('${plan.id}')" class="${cardOpacityClass} rounded-2xl border border-ssal-border p-4 shadow-sm hover:border-ssal-borderDark transition cursor-pointer space-y-2.5">
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="text-base font-extrabold text-ssal-text leading-snug">
-                  ${plan.title || '제목 없음'}
-                </h3>
+                <h3 class="text-base font-extrabold text-ssal-text leading-snug">${plan.title || '제목 없음'}</h3>
                 ${statusBadgeHtml}
               </div>
-              <span class="shrink-0 px-2.5 py-1 text-xs font-semibold bg-[#eee9e0] text-ssal-subText rounded-full">
-                ${plan.carrier || '알뜰폰'}
-              </span>
+              <span class="shrink-0 px-2.5 py-1 text-xs font-semibold bg-[#eee9e0] text-ssal-subText rounded-full">${plan.carrier || '알뜰폰'}</span>
             </div>
 
             <div class="text-xs text-ssal-subText flex justify-between items-center">
@@ -712,7 +1108,7 @@
               </div>
             </div>
 
-            <div class="text-xs font-semibold text-ssal-green pt-1 border-t border-ssal-border/60 flex justify-between items-center">
+            <div class="text-xs font-semibold text-ssal-green pt-1 flex justify-between items-center">
               <span>${opt.name}</span>
             </div>
 
@@ -749,6 +1145,7 @@
       }
 
       if (window.isAdminMode) {
+        document.getElementById("btnDetailAddLine").onclick = (e) => window.openLineModalFromPlan(e, planId);
         document.getElementById("btnEditPlan").onclick = () => window.openAddModal(planId);
         document.getElementById("btnDeletePlan").onclick = () => window.deletePlan(planId);
         document.getElementById("btnClonePlan").onclick = () => window.clonePlan(planId);
@@ -1166,7 +1563,6 @@
       const noticesStr = document.getElementById("formNotices").value.trim();
       const notices = noticesStr ? noticesStr.split('\n').filter(n => n.trim()) : [];
 
-      // 기존 요금제의 status(종료 여부) 유지
       const existingPlan = editId ? window.plansData.find(p => p.id === editId) : null;
       const currentStatus = existingPlan ? (existingPlan.status || '') : '';
 
@@ -1192,7 +1588,6 @@
         window.plansData.unshift(planData);
       }
 
-      // 정렬 유지
       window.plansData.sort((a, b) => {
         const dateA = a.eventEndDate || a.startDate || "";
         const dateB = b.eventEndDate || b.startDate || "";
@@ -1209,7 +1604,6 @@
       }
     }
 
-    // 백업 및 복원 함수들
     window.exportDataHTML = function() {
       if (!window.isAdminMode) return;
       if (!window.plansData || window.plansData.length === 0) {
@@ -1217,23 +1611,9 @@
         return;
       }
       try {
-        const jsonString = JSON.stringify(window.plansData, null, 2);
-        const htmlBackupContent = `<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>쌀먹 요금제 백업 데이터</title>
-</head>
-<body>
-  <h2>알뜰폰 쌀먹 요금제 백업 파일</h2>
-  <script id="ssalmuk-backup-data" type="application/json">
-${jsonString}
-  <\/script>
-</body>
-</html>`;
-
-        const fileName = `ssalmuk_plans_backup_${new Date().toISOString().slice(0, 10)}.html`;
-        const blob = new Blob([htmlBackupContent], { type: "text/html;charset=utf-8" });
+        const jsonString = JSON.stringify({ plans: window.plansData, lines: window.linesData }, null, 2);
+        const fileName = `ssalmuk_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -1244,7 +1624,7 @@ ${jsonString}
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
         }, 500);
-        alert("백업 파일 다운로드가 시작되었습니다.");
+        alert("백업 다운로드가 시작되었습니다.");
       } catch (err) {
         alert("백업 생성 중 오류: " + err.message);
       }
@@ -1255,7 +1635,7 @@ ${jsonString}
       const modal = document.getElementById("textBackupModal");
       const textarea = document.getElementById("backupTextarea");
       if (modal && textarea) {
-        textarea.value = JSON.stringify(window.plansData, null, 2);
+        textarea.value = JSON.stringify({ plans: window.plansData, lines: window.linesData }, null, 2);
         modal.classList.remove("hidden");
       }
     }
@@ -1299,74 +1679,23 @@ ${jsonString}
     async function processImportedText(text) {
       try {
         if (text.charCodeAt(0) === 0xFEFF) text = text.substr(1);
-        let parsedObj = null;
-        try {
-          parsedObj = JSON.parse(text);
-        } catch(e) {
-          let cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-          parsedObj = JSON.parse(cleanText);
+        let parsedObj = JSON.parse(text);
+
+        if (parsedObj.plans || parsedObj.lines) {
+          if (parsedObj.plans) window.plansData = parsedObj.plans;
+          if (parsedObj.lines) window.linesData = parsedObj.lines;
+        } else if (Array.isArray(parsedObj)) {
+          window.plansData = parsedObj;
         }
 
-        let sanitizedList = window.sanitizePlansArray(parsedObj);
-        if (sanitizedList && sanitizedList.length > 0) {
-          if (confirm(`총 ${sanitizedList.length}개의 요금제 데이터를 읽어왔습니다. 복원하시겠습니까?`)) {
-            window.plansData = sanitizedList;
-            window.plansData.sort((a, b) => {
-              const dateA = a.eventEndDate || a.startDate || "";
-              const dateB = b.eventEndDate || b.startDate || "";
-              return dateB.localeCompare(dateA);
-            });
-            await window.saveStorage();
-            renderMainList();
-            if (!document.getElementById("detailScreen").classList.contains("hidden") && window.currentPlanId) {
-              window.showDetailScreen(window.currentPlanId);
-            }
-            alert("요금제 데이터가 성공적으로 복원 및 DB에 동기화되었습니다!");
-          }
-        } else {
-          alert("유효한 요금제 데이터를 찾을 수 없습니다.");
-        }
+        await window.saveStorage();
+        await window.saveLinesStorage();
+        renderMainList();
+        renderLinesList();
+        alert("데이터가 복원되었습니다!");
       } catch (err) {
         alert("복원 처리 중 오류: " + err.message);
       }
-    }
-
-    window.sanitizePlansArray = function(rawInput) {
-      if (!rawInput) return [];
-      let candidateList = Array.isArray(rawInput) ? rawInput : [rawInput];
-      const result = [];
-      candidateList.forEach((item, idx) => {
-        if (!item || typeof item !== 'object') return;
-        let opts = Array.isArray(item.options) ? item.options.map(o => ({
-          name: String(o.name || '기본 요금제'),
-          price: Number(String(o.price || 0).replace(/[^0-9]/g, '')) || 0
-        })) : [{ name: '기본 요금제', price: 0 }];
-
-        let gifts = Array.isArray(item.gifts) ? item.gifts.map(g => ({
-          name: String(g.name || '사은품'),
-          cond: String(g.cond || ''),
-          val: Number(String(g.val || 0).replace(/[^0-9]/g, '')) || 0,
-          month: Number(g.month || 1),
-          endMonth: Number(g.endMonth || 1),
-          isMonthly: Boolean(g.isMonthly)
-        })) : [];
-
-        result.push({
-          id: String(item.id || ("plan-" + Date.now() + "-" + idx)),
-          carrier: String(item.carrier || "알뜰폰"),
-          title: String(item.title || "요금제 정보"),
-          startDate: String(item.startDate || "2026-10-16"),
-          eventEndDate: String(item.eventEndDate || "2026-10-31"),
-          activationDate: String(item.activationDate || "2026-10-16"),
-          code: String(item.code || ""),
-          eventUrl: String(item.eventUrl || ""),
-          options: opts,
-          gifts: gifts,
-          notices: Array.isArray(item.notices) ? item.notices : [],
-          status: String(item.status || "")
-        });
-      });
-      return result;
     }
   </script>
 </body>
