@@ -658,7 +658,12 @@
         localStorage.setItem("ssalmuk_local_visitors", currentCount);
       } catch (err) {
         console.warn("방문자 카운터 Firestore 읽기 실패, 로컬 카운터로 대체합니다:", err);
-        let localCount = parseInt(localStorage.getItem("ssalmuk_local_visitors") || "128", 10);
+        
+        // 기존 128 임시 데이터가 있는 경우 1로 초기화
+        let savedVal = localStorage.getItem("ssalmuk_local_visitors");
+        let localCount = parseInt(savedVal || "1", 10);
+        if (localCount === 128) localCount = 1;
+
         if (!sessionStorage.getItem("ssalmuk_visited")) {
           sessionStorage.setItem("ssalmuk_visited", "true");
           localCount += 1;
