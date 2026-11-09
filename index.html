@@ -6,7 +6,7 @@
   <title>쌀먹 요금제 - 알뜰폰 사은품/유지기간별 순이익 계산기</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <script>
     tailwind.config = {
@@ -14,20 +14,27 @@
         extend: {
           colors: {
             ssal: {
-              bg: '#fbf9f5',
-              card: '#ffffff',
-              border: '#e8e2d5',
-              borderDark: '#d5caaf',
-              text: '#2c2825',
-              subText: '#686058',
-              badge: '#eee9e0',
-              accent: '#9e3412',
-              green: '#2e5b1e',
-              greenBg: '#f2f6ee',
+              bg: '#F8FAFC',
+              card: '#FFFFFF',
+              border: '#E2E8F0',
+              borderDark: '#CBD5E1',
+              text: '#0F172A',
+              subText: '#64748B',
+              accent: '#EA580C', // Vibrant Orange
+              accentHover: '#C2410C',
+              green: '#059669', // Emerald Green
+              greenBg: '#ECFDF5',
+              greenBorder: '#A7F3D0',
+              primary: '#2563EB',
+              primaryBg: '#EFF6FF',
             }
           },
           fontFamily: {
             sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          boxShadow: {
+            'ssal': '0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04)',
+            'ssal-hover': '0 10px 25px -3px rgba(15, 23, 42, 0.1), 0 4px 10px -2px rgba(15, 23, 42, 0.06)',
           }
         }
       }
@@ -35,135 +42,155 @@
   </script>
   <style>
     body {
-      background-color: #fbf9f5;
-      color: #2c2825;
+      background-color: #F1F5F9;
+      color: #0F172A;
       font-family: 'Pretendard', sans-serif;
       -webkit-font-smoothing: antialiased;
     }
     .custom-scrollbar::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
+      width: 6px;
+      height: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: #f1ede4;
+      background: #F1F5F9;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #d5caaf;
-      border-radius: 3px;
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #EA580C 0%, #D97706 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center overflow-x-hidden">
+<body class="min-h-screen flex flex-col items-center overflow-x-hidden antialiased">
 
   <!-- Top Container -->
-  <div id="appContainer" class="w-full max-w-full sm:max-w-md md:max-w-xl min-h-screen bg-[#fbf9f5] border-x border-[#e8e2d5] flex flex-col relative shadow-sm box-border">
+  <div id="appContainer" class="w-full max-w-full sm:max-w-md md:max-w-xl min-h-screen bg-[#F8FAFC] border-x border-ssal-border flex flex-col relative shadow-xl box-border">
 
     <!-- Admin Nav Tabs (관리자 모드일 때만 표시) -->
-    <div id="adminTabNav" class="hidden w-full bg-white border-b border-ssal-border p-2 flex justify-center gap-2 text-xs font-bold shrink-0">
-      <button id="navTabPlans" onclick="switchMainTab('plans')" class="px-4 py-2 rounded-xl bg-[#9e3412] text-white shadow-sm transition">
-        <i class="fa-solid fa-list-check mr-1"></i>요금제 계산기
+    <div id="adminTabNav" class="hidden w-full bg-slate-900 border-b border-slate-800 p-2.5 flex justify-center gap-2 text-xs font-bold shrink-0 shadow-md">
+      <button id="navTabPlans" onclick="switchMainTab('plans')" class="px-4 py-2 rounded-xl bg-orange-600 text-white shadow-md transition flex items-center gap-1.5">
+        <i class="fa-solid fa-list-check"></i>요금제 계산기
       </button>
-      <button id="navTabLines" onclick="switchMainTab('lines')" class="px-4 py-2 rounded-xl bg-[#eee9e0] text-ssal-subText hover:bg-[#e2dccf] transition">
-        <i class="fa-solid fa-sim-card mr-1"></i>회선 관리자
+      <button id="navTabLines" onclick="switchMainTab('lines')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-sim-card"></i>회선 관리자
       </button>
     </div>
 
     <!-- ==================== MAIN PLAN SCREEN ==================== -->
-    <div id="mainScreen" class="w-full flex-1 p-3 sm:p-4 space-y-4 box-border">
+    <div id="mainScreen" class="w-full flex-1 p-3.5 sm:p-5 space-y-4 box-border">
       
       <div class="flex items-center justify-between pt-2">
-        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-ssal-text">쌀먹 요금제 v1.0</h1>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-orange-500 text-white flex items-center justify-center font-black text-base shadow-md shadow-orange-500/30">
+            🌾
+          </div>
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight text-slate-900">쌀먹 요금제 <span class="text-xs font-extrabold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full ml-1">v2.0</span></h1>
+        </div>
+        
         <div class="flex items-center gap-1.5">
-          <button id="adminBtnAddPlan" onclick="openAddModal()" class="px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-white bg-[#9e3412] hover:bg-[#802a0e] rounded-lg shadow-sm transition hidden items-center gap-1 shrink-0">
+          <button id="adminBtnAddPlan" onclick="openAddModal()" class="px-3 py-2 text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-xl shadow-md shadow-orange-600/20 transition hidden items-center gap-1.5 shrink-0">
             <i class="fa-solid fa-plus text-xs"></i>
             <span>새 요금제</span>
           </button>
         </div>
       </div>
 
-      <p class="text-xs text-ssal-subText leading-snug">
+      <p class="text-xs text-slate-500 leading-relaxed font-medium">
         알뜰폰 사은품을 요금제·유지기간 및 종료월 지정, 일할계산을 통해 월별 순이익으로 정확하게 산출합니다.
       </p>
 
-      <div class="flex items-center justify-between pt-1 pb-1 text-xs">
-        <span id="totalPlansCount" class="font-bold text-ssal-subText">총 0개 요금제</span>
+      <div class="flex items-center justify-between pt-1 pb-1 text-xs border-b border-slate-200/80 pb-2.5">
+        <span id="totalPlansCount" class="font-bold text-slate-600 flex items-center gap-1">
+          <i class="fa-solid fa-layer-group text-slate-400"></i> 총 0개 요금제
+        </span>
         
-        <div id="adminControlBar" class="flex items-center gap-1.5 flex-wrap justify-end hidden">
-          <button onclick="exportDataHTML()" title="백업 파일 다운로드 및 복사" class="text-ssal-subText hover:text-ssal-accent transition text-[11px] font-semibold flex items-center gap-1">
-            <i class="fa-solid fa-download"></i> 백업
+        <div id="adminControlBar" class="flex items-center gap-2 flex-wrap justify-end hidden">
+          <button onclick="exportDataHTML()" title="백업 파일 다운로드 및 복사" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition text-[11px] font-bold flex items-center gap-1 border border-slate-200">
+            <i class="fa-solid fa-download text-slate-500"></i> 백업
           </button>
-          <label title="HTML/JSON 데이터 파일 불러오기" class="text-ssal-subText hover:text-ssal-accent transition text-[11px] font-semibold flex items-center gap-1 cursor-pointer">
-            <i class="fa-solid fa-upload"></i> 파일복원
+          <label title="HTML/JSON 데이터 파일 불러오기" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition text-[11px] font-bold flex items-center gap-1 cursor-pointer border border-slate-200">
+            <i class="fa-solid fa-upload text-slate-500"></i> 파일복원
             <input type="file" id="importHtmlFileInput" accept=".html,.htm,.json,.txt" onchange="importDataHTML(event)" class="hidden">
           </label>
-          <button onclick="openTextBackupModal()" class="px-2 py-1 bg-[#eee9e0] hover:bg-[#e2dccf] text-ssal-text rounded-md text-[11px] font-bold flex items-center gap-1 transition">
-            <i class="fa-solid fa-code text-ssal-accent"></i> 📝 텍스트 복원
+          <button onclick="openTextBackupModal()" class="px-2.5 py-1 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 rounded-lg text-[11px] font-bold flex items-center gap-1 transition">
+            <i class="fa-solid fa-code text-orange-600"></i> 📝 텍스트
           </button>
         </div>
       </div>
 
-      <div id="plansList" class="space-y-3"></div>
+      <div id="plansList" class="space-y-3.5"></div>
     </div>
 
     <!-- ==================== LINE MANAGER SCREEN (관리자 전용) ==================== -->
-    <div id="lineManagerScreen" class="w-full flex-1 p-3 sm:p-4 space-y-4 box-border hidden">
-      <div class="flex items-center justify-between pt-2 border-b border-ssal-border pb-3">
+    <div id="lineManagerScreen" class="w-full flex-1 p-3.5 sm:p-5 space-y-4 box-border hidden">
+      <div class="flex items-center justify-between pt-2 border-b border-slate-200 pb-3">
         <div>
-          <h2 class="text-lg font-black text-ssal-text">회선 관리자 (나만의 전용)</h2>
-          <p class="text-[11px] text-ssal-subText">개통된 회선의 탈출일 및 월 청구요금을 실시간으로 관리합니다.</p>
+          <h2 class="text-lg font-black text-slate-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-sim-card text-orange-600"></i> 회선 관리자 (나만의 전용)
+          </h2>
+          <p class="text-[11px] text-slate-500 font-medium">개통된 회선의 탈출일 및 월 청구요금을 실시간으로 관리합니다.</p>
         </div>
-        <button onclick="openLineModal()" class="px-3 py-1.5 bg-[#9e3412] hover:bg-[#802a0e] text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1">
+        <button onclick="openLineModal()" class="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl shadow-md shadow-orange-600/20 transition flex items-center gap-1">
           <i class="fa-solid fa-plus"></i> 직접 추가
         </button>
       </div>
 
       <!-- 요약 대시보드 카드 박스 -->
-      <div id="lineSummaryDashboard" class="bg-white rounded-2xl border border-ssal-border p-3.5 space-y-3 shadow-sm text-xs">
-        <div class="font-bold text-ssal-text flex items-center gap-1.5 border-b border-ssal-border pb-2">
-          <i class="fa-solid fa-chart-pie text-ssal-accent"></i>
-          <span>보유 회선 종합 요약 대시보드 (<span id="dashCurrentMonthLabel">현재 월</span>)</span>
+      <div id="lineSummaryDashboard" class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-4 space-y-3.5 shadow-lg text-xs border border-slate-700">
+        <div class="font-bold flex items-center justify-between border-b border-slate-700/80 pb-2.5">
+          <span class="flex items-center gap-1.5 text-orange-400">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>보유 회선 종합 요약 대시보드 (<span id="dashCurrentMonthLabel">현재 월</span>)</span>
+          </span>
         </div>
         
         <div class="grid grid-cols-2 gap-2">
-          <div class="bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
-            <span class="text-[10px] text-ssal-subText block">총 보유 회선</span>
-            <strong id="dashTotalLines" class="text-sm font-black text-ssal-text">0개</strong>
+          <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+            <span class="text-[10px] text-slate-400 block font-semibold">총 보유 회선</span>
+            <strong id="dashTotalLines" class="text-base font-black text-white">0개</strong>
           </div>
-          <div class="bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
-            <span class="text-[10px] text-ssal-subText block">안전 유지 중</span>
-            <strong id="dashSafeLines" class="text-sm font-black text-ssal-green">0개</strong>
+          <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+            <span class="text-[10px] text-emerald-400 block font-semibold">안전 유지 중</span>
+            <strong id="dashSafeLines" class="text-base font-black text-emerald-400">0개</strong>
           </div>
-          <div class="bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
-            <span class="text-[10px] text-ssal-subText block">탈출 임박 (7일이내)</span>
-            <strong id="dashUrgentLines" class="text-sm font-black text-amber-600">0개</strong>
+          <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+            <span class="text-[10px] text-amber-400 block font-semibold">탈출 임박 (7일이내)</span>
+            <strong id="dashUrgentLines" class="text-base font-black text-amber-400">0개</strong>
           </div>
-          <div class="bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
-            <span class="text-[10px] text-ssal-subText block">탈출 가능 (도래/경과)</span>
-            <strong id="dashReadyLines" class="text-sm font-black text-rose-600">0개</strong>
+          <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+            <span class="text-[10px] text-rose-400 block font-semibold">탈출 가능 (도래/경과)</span>
+            <strong id="dashReadyLines" class="text-base font-black text-rose-400">0개</strong>
           </div>
         </div>
 
-        <div class="pt-2 border-t border-ssal-border space-y-2 text-[11px]">
+        <div class="pt-2 border-t border-slate-700/80 space-y-2 text-[11px]">
           <div class="grid grid-cols-2 gap-2">
-            <div class="bg-amber-50/70 p-2.5 rounded-xl border border-amber-200">
-              <span class="text-[10px] text-amber-900 font-bold block mb-0.5">💸 <span class="dashMonthText">현재 월</span> 총 통신비</span>
-              <strong id="dashTotalFee" class="text-xs sm:text-sm font-black text-amber-950">0원</strong>
+            <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700">
+              <span class="text-[10px] text-slate-300 font-bold block mb-0.5">💸 <span class="dashMonthText">현재 월</span> 총 통신비</span>
+              <strong id="dashTotalFee" class="text-xs sm:text-sm font-black text-rose-300">0원</strong>
             </div>
-            <div class="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
-              <span class="text-[10px] text-emerald-900 font-bold block mb-0.5">🎁 <span class="dashMonthText">현재 월</span> 총 사은품</span>
-              <strong id="dashTotalGiftVal" class="text-xs sm:text-sm font-black text-emerald-800">+0원</strong>
+            <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700">
+              <span class="text-[10px] text-slate-300 font-bold block mb-0.5">🎁 <span class="dashMonthText">현재 월</span> 총 사은품</span>
+              <strong id="dashTotalGiftVal" class="text-xs sm:text-sm font-black text-emerald-300">+0원</strong>
             </div>
           </div>
 
-          <div class="bg-ssal-bg p-3 rounded-xl border border-ssal-border flex justify-between items-center">
-            <span class="font-bold text-ssal-text">🔥 <span class="dashMonthText">현재 월</span> 예상 쌀먹 (사은품 - 통신비)</span>
-            <strong id="dashNetCost" class="text-sm sm:text-base font-black text-ssal-green">+0원</strong>
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+            <span class="font-bold text-slate-200">🔥 <span class="dashMonthText">현재 월</span> 예상 쌀먹 (사은품 - 통신비)</span>
+            <strong id="dashNetCost" class="text-sm sm:text-base font-black text-emerald-400">+0원</strong>
           </div>
         </div>
       </div>
 
       <div class="flex items-center justify-between text-xs pt-1">
-        <span id="totalLinesCount" class="font-bold text-ssal-subText">총 0개 회선 등록됨</span>
+        <span id="totalLinesCount" class="font-bold text-slate-500">총 0개 회선 등록됨</span>
       </div>
 
       <div id="linesList" class="space-y-3"></div>
@@ -171,69 +198,72 @@
 
     <!-- ==================== PLAN DETAIL SCREEN ==================== -->
     <div id="detailScreen" class="w-full flex-1 p-4 space-y-4 hidden">
-      <div class="flex items-center justify-between border-b border-ssal-border pb-3">
-        <button onclick="showMainScreen()" class="px-3 py-1.5 bg-[#eee9e0] hover:bg-[#e2dccf] text-ssal-text rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <button onclick="showMainScreen()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-slate-200">
           <i class="fa-solid fa-arrow-left"></i>
           <span>목록으로</span>
         </button>
 
         <div id="adminDetailActionBtns" class="flex items-center gap-1.5 hidden">
-          <button id="btnDetailAddLine" class="px-2.5 py-1.5 text-xs font-bold text-white bg-ssal-green hover:bg-emerald-800 rounded-lg transition flex items-center gap-1">
+          <button id="btnDetailAddLine" class="px-2.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition flex items-center gap-1 shadow-sm">
             <i class="fa-solid fa-mobile-screen-button"></i> 회선 추가
           </button>
-          <button id="btnClonePlan" class="px-2.5 py-1.5 text-xs font-semibold text-ssal-subText bg-[#eee9e0] hover:bg-[#e2dccf] rounded-lg transition">
+          <button id="btnClonePlan" class="px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition border border-slate-200">
             <i class="fa-regular fa-copy"></i> 복사
           </button>
-          <button id="btnEditPlan" class="px-2.5 py-1.5 text-xs font-semibold text-ssal-subText bg-[#eee9e0] hover:bg-[#e2dccf] rounded-lg transition">
+          <button id="btnEditPlan" class="px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition border border-slate-200">
             <i class="fa-solid fa-pen"></i> 수정
           </button>
-          <button id="btnDeletePlan" class="px-2.5 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition">
+          <button id="btnDeletePlan" class="px-2.5 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition border border-rose-200">
             <i class="fa-solid fa-trash"></i> 삭제
           </button>
         </div>
       </div>
 
-      <div class="space-y-2">
-        <div class="flex items-start justify-between gap-2">
-          <h2 id="detailTitle" class="text-base font-extrabold text-ssal-text leading-snug">-</h2>
-          <span id="detailCarrierBadge" class="shrink-0 px-2.5 py-1 text-xs font-semibold bg-[#eee9e0] text-ssal-subText rounded-full">-</span>
+      <div class="space-y-2.5 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-start gap-2.5">
+          <!-- 통신사 눈에 띄는 바 -->
+          <span id="detailCarrierBadge" class="shrink-0 px-3 py-1 text-xs font-black rounded-lg shadow-sm">
+            -
+          </span>
+          <h2 id="detailTitle" class="text-base sm:text-lg font-black text-slate-900 leading-snug flex-1">-</h2>
         </div>
 
-        <div class="text-xs text-ssal-subText flex items-center justify-between pt-0.5">
-          <span>개통일 <strong id="detailActivationDate" class="text-ssal-text font-bold">-</strong> · 코드 <strong id="detailCode" class="text-ssal-accent font-bold">-</strong></span>
+        <div class="text-xs text-slate-500 flex items-center justify-between pt-1 border-t border-slate-100">
+          <span>개통일 <strong id="detailActivationDate" class="text-slate-800 font-bold">-</strong> · 코드 <strong id="detailCode" class="text-orange-600 font-bold">-</strong></span>
         </div>
 
-        <div id="detailEventPeriodBox" class="text-xs text-ssal-subText bg-white p-2.5 rounded-xl border border-ssal-border flex justify-between items-center shadow-sm">
+        <div id="detailEventPeriodBox" class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex justify-between items-center">
           <span>이벤트 기간</span>
-          <strong id="detailEventPeriodText" class="text-ssal-text">-</strong>
+          <strong id="detailEventPeriodText" class="text-slate-900 font-bold">-</strong>
         </div>
 
-        <button id="btnEventUrl" onclick="openEventUrl()" class="w-full py-2.5 bg-[#9e3412] hover:bg-[#802a0e] text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5 mt-2">
-          <span>이벤트 페이지</span>
+        <button id="btnEventUrl" onclick="openEventUrl()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 mt-2">
+          <span>이벤트 공식 페이지 방문</span>
           <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
         </button>
       </div>
 
       <div class="space-y-2 pt-1">
-        <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">요약</h3>
+        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">최대 혜택 요약</h3>
         
-        <select id="detailSubPlanSelect" onchange="onDetailOptionChange()" class="w-full bg-white border border-ssal-border text-ssal-text text-xs rounded-xl p-2.5 font-bold focus:outline-none focus:border-ssal-borderDark shadow-sm">
+        <select id="detailSubPlanSelect" onchange="onDetailOptionChange()" class="w-full bg-white border border-slate-300 text-slate-900 text-xs rounded-xl p-2.5 font-bold focus:outline-none focus:border-orange-500 shadow-sm">
         </select>
 
-        <div id="maxProfitTableBox" class="bg-white rounded-xl border border-emerald-200 p-3.5 text-xs space-y-2.5 shadow-sm">
-          <div class="flex items-center justify-between border-b border-emerald-100 pb-2">
+        <div id="maxProfitTableBox" class="bg-gradient-to-br from-emerald-50/80 to-white rounded-2xl border border-emerald-200 p-4 text-xs space-y-3 shadow-sm">
+          <div class="flex items-center justify-between border-b border-emerald-200/80 pb-2.5">
             <div>
-              <div class="text-[11px] font-semibold text-emerald-800 flex items-center gap-1">
+              <div class="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
                 <i class="fa-solid fa-trophy text-amber-500"></i>
                 최대순이익 기간 월 유지시 최대순이익
               </div>
-              <div id="maxProfitNoticeText" class="text-sm font-extrabold text-ssal-text mt-0.5">
-                <span id="maxProfitMonthLabel" class="text-ssal-accent text-base font-black">0월</span>까지 유지 시 최대 순이익 (<span id="maxProfitMonthNum">0</span>개월)
+              <div id="maxProfitNoticeText" class="text-sm font-black text-slate-900 mt-0.5">
+                <span id="maxProfitMonthLabel" class="text-orange-600 text-base font-black">0월</span>까지 유지 시 최대 순이익 (<span id="maxProfitMonthNum">0</span>개월)
               </div>
             </div>
             <div class="text-right">
-              <div class="text-[10px] text-ssal-subText">누적 최대 순이익</div>
-              <span id="maxProfitTotalText" class="font-black text-emerald-700 text-base">+0원</span>
+              <div class="text-[10px] text-slate-500 font-medium">누적 최대 순이익</div>
+              <span id="maxProfitTotalText" class="font-black text-emerald-600 text-lg sm:text-xl">+0원</span>
             </div>
           </div>
 
@@ -245,79 +275,79 @@
       </div>
 
       <div class="space-y-2 pt-2">
-        <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">사은품 목록 및 지급 구간</h3>
-        <p class="text-[11px] text-ssal-subText leading-tight">
+        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">사은품 목록 및 지급 구간</h3>
+        <p class="text-[11px] text-slate-500 leading-tight">
           시작월 및 유지기간 설정이 적용된 사은품 지급 항목입니다.
         </p>
-        <div id="detailGiftsList" class="space-y-1.5 text-xs"></div>
+        <div id="detailGiftsList" class="space-y-2 text-xs"></div>
       </div>
 
       <div class="space-y-2 pt-2">
-        <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">유의사항</h3>
-        <div class="bg-white rounded-xl border border-ssal-border p-3 text-[11px] text-ssal-subText space-y-1.5 leading-relaxed shadow-sm">
-          <ul id="detailNoticesList" class="list-disc list-inside space-y-1 text-ssal-subText"></ul>
+        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">유의사항</h3>
+        <div class="bg-white rounded-2xl border border-slate-200 p-3.5 text-[11px] text-slate-600 space-y-1.5 leading-relaxed shadow-sm">
+          <ul id="detailNoticesList" class="list-disc list-inside space-y-1 text-slate-600"></ul>
         </div>
       </div>
 
       <div class="space-y-2 pt-2">
-        <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">요금제 스펙</h3>
-        <div id="detailPlanSpecBox" class="bg-white rounded-xl border border-ssal-border p-3 text-xs space-y-1.5 shadow-sm">
+        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">요금제 스펙</h3>
+        <div id="detailPlanSpecBox" class="bg-white rounded-2xl border border-slate-200 p-3.5 text-xs space-y-2 shadow-sm">
           <div class="flex justify-between">
-            <span class="text-ssal-subText">요금제</span>
-            <span id="specPlanName" class="font-bold text-ssal-text">-</span>
+            <span class="text-slate-500 font-medium">요금제</span>
+            <span id="specPlanName" class="font-bold text-slate-900">-</span>
           </div>
-          <div class="flex justify-between border-t border-ssal-border/60 pt-1.5">
-            <span class="text-ssal-subText">월 기본 요금 (할인)</span>
-            <span id="specPlanPrice" class="font-bold text-ssal-text">0원 / 월</span>
+          <div class="flex justify-between border-t border-slate-100 pt-2">
+            <span class="text-slate-500 font-medium">월 기본 요금 (할인)</span>
+            <span id="specPlanPrice" class="font-bold text-orange-600">0원 / 월</span>
           </div>
         </div>
       </div>
 
       <div class="space-y-2 pt-2">
-        <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">유지 기간별 시뮬레이션</h3>
-        <select id="detailSubPlanSelect2" onchange="syncOptionSelect(this.value)" class="w-full bg-white border border-ssal-border text-ssal-text text-xs rounded-xl p-2.5 font-bold">
+        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">유지 기간별 시뮬레이션</h3>
+        <select id="detailSubPlanSelect2" onchange="syncOptionSelect(this.value)" class="w-full bg-white border border-slate-300 text-slate-900 text-xs rounded-xl p-2.5 font-bold">
         </select>
 
         <div id="monthTabsContainer" class="grid grid-cols-4 gap-1.5"></div>
 
-        <div class="bg-white rounded-xl border border-ssal-border p-3.5 space-y-2 text-xs shadow-sm">
-          <div class="flex justify-between items-center border-b border-ssal-border pb-2">
-            <span class="font-bold text-ssal-subText">유지기간</span>
-            <span id="calcPeriodText" class="font-bold text-ssal-text">10개월</span>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-2.5 text-xs shadow-sm">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+            <span class="font-bold text-slate-500">유지기간</span>
+            <span id="calcPeriodText" class="font-bold text-slate-900">10개월</span>
           </div>
 
-          <div class="flex justify-between items-center text-ssal-subText">
-            <span>총 청구금 <span class="text-[10px] text-amber-700 bg-amber-50 px-1 rounded">(1M 일할적용)</span></span>
-            <span id="calcTotalBill" class="font-semibold text-ssal-text">0원</span>
+          <div class="flex justify-between items-center text-slate-500">
+            <span>총 청구금 <span class="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-semibold border border-amber-200">(1M 일할적용)</span></span>
+            <span id="calcTotalBill" class="font-bold text-slate-900">0원</span>
           </div>
 
-          <div class="flex justify-between items-start text-ssal-subText">
+          <div class="flex justify-between items-start text-slate-500">
             <div>
               <div>사은품 총 가치</div>
-              <div id="calcGiftsSummary" class="text-[10px] text-ssal-subText/80 leading-tight"></div>
+              <div id="calcGiftsSummary" class="text-[10px] text-slate-400 leading-tight"></div>
             </div>
-            <span id="calcTotalGiftsVal" class="font-semibold text-ssal-text">0원</span>
+            <span id="calcTotalGiftsVal" class="font-bold text-emerald-600">0원</span>
           </div>
 
-          <div class="flex justify-between items-center pt-2 border-t border-ssal-border">
-            <span class="font-bold text-ssal-text">선택기간 순이익</span>
-            <span id="calcNetTotal" class="text-base font-extrabold text-ssal-green">0원</span>
+          <div class="flex justify-between items-center pt-2.5 border-t border-slate-100">
+            <span class="font-bold text-slate-900">선택기간 순이익</span>
+            <span id="calcNetTotal" class="text-base font-black text-emerald-600">0원</span>
           </div>
 
           <div class="flex justify-between items-center">
-            <span class="font-bold text-ssal-text">월평균 순이익</span>
-            <span id="calcMonthlyAvg" class="text-sm font-bold text-ssal-green">0원</span>
+            <span class="font-bold text-slate-900">월평균 순이익</span>
+            <span id="calcMonthlyAvg" class="text-sm font-bold text-emerald-600">0원</span>
           </div>
 
-          <div class="flex justify-between items-center text-ssal-subText">
+          <div class="flex justify-between items-center text-slate-500 border-t border-slate-100 pt-2">
             <span>추천인 코드</span>
-            <span id="calcRefCode" class="font-bold text-ssal-accent">-</span>
+            <span id="calcRefCode" class="font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">-</span>
           </div>
         </div>
       </div>
 
       <div class="space-y-2 pt-2">
-        <h3 class="text-xs font-bold text-ssal-subText uppercase tracking-wider">월별 상세 계산 타임라인</h3>
+        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">월별 상세 계산 타임라인</h3>
         <div id="timelineContainer" class="space-y-2"></div>
       </div>
 
@@ -327,100 +357,102 @@
   </div>
 
   <!-- ==================== ADD / EDIT PLAN MODAL ==================== -->
-  <div id="planModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-[#fbf9f5] rounded-2xl max-w-lg w-full max-h-[80vh] sm:max-h-[85vh] flex flex-col shadow-2xl border border-ssal-border overflow-hidden my-auto">
+  <div id="planModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#F8FAFC] rounded-3xl max-w-lg w-full max-h-[80vh] sm:max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden my-auto">
       <input type="hidden" id="formEditId" value="">
       
-      <div class="px-4 py-3 bg-white border-b border-ssal-border flex items-center justify-between shrink-0">
-        <h3 id="modalHeaderTitle" class="font-bold text-sm text-ssal-text">새 요금제 추가</h3>
+      <div class="px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+        <h3 id="modalHeaderTitle" class="font-black text-sm text-slate-900 flex items-center gap-1.5">
+          <i class="fa-solid fa-pen-to-square text-orange-600"></i> 새 요금제 추가
+        </h3>
         <div class="flex items-center gap-2">
-          <button type="button" onclick="clearFormInputs()" class="text-[11px] font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded border border-rose-200 transition flex items-center gap-1">
+          <button type="button" onclick="clearFormInputs()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 transition flex items-center gap-1">
             <i class="fa-solid fa-rotate-left"></i>
             <span>초기화</span>
           </button>
-          <button onclick="closeAddModal()" class="w-7 h-7 rounded-full hover:bg-ssal-bg text-ssal-subText flex items-center justify-center">
+          <button onclick="closeAddModal()" class="w-7 h-7 rounded-full hover:bg-slate-100 text-slate-500 flex items-center justify-center transition">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
       </div>
 
       <form id="planForm" onsubmit="savePlanForm(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div class="p-4 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
-          <div class="grid grid-cols-2 gap-2">
+        <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
+          <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block font-bold text-ssal-subText mb-1">통신사</label>
-              <input type="text" id="formCarrier" required placeholder="예: KT M모바일, 헬로모바일" class="w-full p-2 bg-white border border-ssal-border rounded-lg">
+              <label class="block font-bold text-slate-700 mb-1">통신사</label>
+              <input type="text" id="formCarrier" required placeholder="예: KT M모바일, 헬로모바일" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none">
             </div>
             <div>
-              <label class="block font-bold text-ssal-subText mb-1">추천인 코드</label>
-              <input type="text" id="formCode" placeholder="예: M, 셀프개통" class="w-full p-2 bg-white border border-ssal-border rounded-lg">
+              <label class="block font-bold text-slate-700 mb-1">추천인 코드</label>
+              <input type="text" id="formCode" placeholder="예: M, 셀프개통" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none">
             </div>
           </div>
 
           <div>
-            <label class="block font-bold text-ssal-subText mb-1">이벤트 제목</label>
-            <input type="text" id="formTitle" required placeholder="예: [갤럭시자급제] 매월 3만원x8개월..." class="w-full p-2 bg-white border border-ssal-border rounded-lg">
+            <label class="block font-bold text-slate-700 mb-1">이벤트 제목</label>
+            <input type="text" id="formTitle" required placeholder="예: [갤럭시자급제] 매월 3만원x8개월..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none">
           </div>
 
-          <div class="bg-white p-3 rounded-xl border border-ssal-border space-y-2">
-            <label class="block font-bold text-ssal-text">📅 이벤트 기간 설정</label>
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-2">
+            <label class="block font-bold text-slate-900">📅 이벤트 기간 설정</label>
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-[11px] font-semibold text-ssal-subText mb-1">이벤트 시작일</label>
-                <input type="date" id="formStartDate" required class="w-full p-2 bg-ssal-bg border border-ssal-border rounded-lg font-semibold">
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">이벤트 시작일</label>
+                <input type="date" id="formStartDate" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800">
               </div>
               <div>
-                <label class="block text-[11px] font-semibold text-ssal-subText mb-1">이벤트 종료일</label>
-                <input type="date" id="formEndDate" required class="w-full p-2 bg-ssal-bg border border-ssal-border rounded-lg font-semibold">
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">이벤트 종료일</label>
+                <input type="date" id="formEndDate" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800">
               </div>
             </div>
           </div>
 
-          <div class="bg-white p-3 rounded-xl border border-ssal-border space-y-2">
-            <label class="block font-bold text-ssal-text">📱 개통일 설정 <span class="text-[10px] text-ssal-accent">*1M 일할기준</span></label>
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-2">
+            <label class="block font-bold text-slate-900">📱 개통일 설정 <span class="text-[10px] text-orange-600">*1M 일할기준</span></label>
             <div>
-              <input type="date" id="formActivationDate" required class="w-full p-2 bg-ssal-bg border border-ssal-border rounded-lg font-semibold">
+              <input type="date" id="formActivationDate" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800">
             </div>
           </div>
 
           <div>
-            <label class="block font-bold text-ssal-subText mb-1">이벤트 URL</label>
-            <input type="url" id="formEventUrl" placeholder="https://..." class="w-full p-2 bg-white border border-ssal-border rounded-lg">
+            <label class="block font-bold text-slate-700 mb-1">이벤트 URL</label>
+            <input type="url" id="formEventUrl" placeholder="https://..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none">
           </div>
 
-          <div class="border-t border-ssal-border pt-3 space-y-2">
+          <div class="border-t border-slate-200 pt-3.5 space-y-2">
             <div class="flex items-center justify-between">
-              <label class="font-bold text-ssal-text">요금제 옵션 목록</label>
-              <button type="button" onclick="addFormOptionRow()" class="px-2 py-0.5 bg-[#eee9e0] hover:bg-[#e2dccf] text-ssal-text font-bold rounded">
+              <label class="font-bold text-slate-900">요금제 옵션 목록</label>
+              <button type="button" onclick="addFormOptionRow()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200">
                 + 옵션 추가
               </button>
             </div>
             <div id="formOptionsContainer" class="space-y-2"></div>
           </div>
 
-          <div class="border-t border-ssal-border pt-3 space-y-2">
+          <div class="border-t border-slate-200 pt-3.5 space-y-2">
             <div class="flex items-center justify-between">
-              <label class="font-bold text-ssal-text">사은품 목록 및 지급월 설정</label>
-              <button type="button" onclick="addFormGiftRow()" class="px-2 py-0.5 bg-[#eee9e0] hover:bg-[#e2dccf] text-ssal-text font-bold rounded">
+              <label class="font-bold text-slate-900">사은품 목록 및 지급월 설정</label>
+              <button type="button" onclick="addFormGiftRow()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200">
                 + 사은품 추가
               </button>
             </div>
             <div id="formGiftsContainer" class="space-y-2"></div>
           </div>
 
-          <div class="border-t border-ssal-border pt-3 pb-2">
-            <label class="block font-bold text-ssal-subText mb-1">유의사항 (줄바꿈 구분)</label>
-            <textarea id="formNotices" rows="3" placeholder="지급 조건, 혜택 제외 대상 등..." class="w-full p-2 bg-white border border-ssal-border rounded-lg resize-none"></textarea>
+          <div class="border-t border-slate-200 pt-3.5 pb-2">
+            <label class="block font-bold text-slate-700 mb-1">유의사항 (줄바꿈 구분)</label>
+            <textarea id="formNotices" rows="3" placeholder="지급 조건, 혜택 제외 대상 등..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl resize-none focus:border-orange-500 focus:outline-none"></textarea>
           </div>
         </div>
 
-        <div class="p-3 bg-white border-t border-ssal-border flex justify-between items-center shrink-0">
-          <button type="button" onclick="clearFormInputs()" class="px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold rounded-xl text-xs transition">
+        <div class="p-4 bg-white border-t border-slate-200 flex justify-between items-center shrink-0">
+          <button type="button" onclick="clearFormInputs()" class="px-3.5 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold rounded-xl text-xs transition border border-rose-200">
             <i class="fa-solid fa-eraser mr-1"></i>전체 비우기
           </button>
           <div class="flex gap-2">
-            <button type="button" onclick="closeAddModal()" class="px-4 py-2 bg-[#eee9e0] text-ssal-subText font-bold rounded-xl text-xs">취소</button>
-            <button type="submit" class="px-5 py-2 bg-[#9e3412] text-white font-bold rounded-xl text-xs shadow-sm hover:bg-[#802a0e] transition">저장하기</button>
+            <button type="button" onclick="closeAddModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs border border-slate-200">취소</button>
+            <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-bold rounded-xl text-xs shadow-md shadow-orange-600/20 hover:bg-orange-700 transition">저장하기</button>
           </div>
         </div>
       </form>
@@ -428,83 +460,83 @@
   </div>
 
   <!-- ==================== LINE ADD/EDIT MODAL ==================== -->
-  <div id="lineModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-[#fbf9f5] rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-ssal-border overflow-hidden my-auto">
+  <div id="lineModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#F8FAFC] rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden my-auto">
       <input type="hidden" id="lineEditId" value="">
       
-      <div class="px-4 py-3 bg-white border-b border-ssal-border flex items-center justify-between shrink-0">
-        <h3 id="lineModalHeaderTitle" class="font-bold text-sm text-ssal-text">회선 추가</h3>
-        <button onclick="closeLineModal()" class="w-7 h-7 rounded-full hover:bg-ssal-bg text-ssal-subText flex items-center justify-center">
+      <div class="px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+        <h3 id="lineModalHeaderTitle" class="font-black text-sm text-slate-900">회선 추가</h3>
+        <button onclick="closeLineModal()" class="w-7 h-7 rounded-full hover:bg-slate-100 text-slate-500 flex items-center justify-center transition">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
       <form id="lineForm" onsubmit="saveLineForm(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div class="p-4 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
+        <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
 
           <div>
-            <label class="block font-bold text-ssal-subText mb-1">회선 별칭 (직접 입력)</label>
-            <input type="text" id="lineAlias" required placeholder="예: 메인폰_KT, 서브_리니지01 등" class="w-full p-2.5 bg-white border border-ssal-border rounded-xl font-bold text-ssal-text">
+            <label class="block font-bold text-slate-700 mb-1">회선 별칭 (직접 입력)</label>
+            <input type="text" id="lineAlias" required placeholder="예: 메인폰_KT, 서브_리니지01 등" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 focus:border-orange-500 focus:outline-none">
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block font-bold text-ssal-subText mb-1">통신사 (요금제 자동연동)</label>
-              <input type="text" id="lineCarrier" required placeholder="통신사명" class="w-full p-2 bg-white border border-ssal-border rounded-lg font-semibold">
+              <label class="block font-bold text-slate-700 mb-1">통신사 (요금제 자동연동)</label>
+              <input type="text" id="lineCarrier" required placeholder="통신사명" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-semibold">
             </div>
             <div>
-              <label class="block font-bold text-ssal-subText mb-1">월 청구 요금 (자동연동)</label>
-              <input type="number" id="lineMonthlyFee" required placeholder="0" class="w-full p-2 bg-white border border-ssal-border rounded-lg font-bold text-ssal-accent">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 bg-white p-3 rounded-xl border border-ssal-border">
-            <div>
-              <label class="block font-bold text-ssal-subText mb-1">개통 가입일 (선택)</label>
-              <input type="date" id="lineActivationDate" required class="w-full p-2 bg-ssal-bg border border-ssal-border rounded-lg font-semibold">
-            </div>
-            <div>
-              <label class="block font-bold text-ssal-subText mb-1">탈출 예정일자 (선택)</label>
-              <input type="date" id="lineTargetDate" required class="w-full p-2 bg-ssal-bg border border-ssal-border rounded-lg font-semibold text-ssal-accent">
+              <label class="block font-bold text-slate-700 mb-1">월 청구 요금 (자동연동)</label>
+              <input type="number" id="lineMonthlyFee" required placeholder="0" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-orange-600">
             </div>
           </div>
 
-          <div>
-            <label class="block font-bold text-ssal-subText mb-1">사은품 목록 및 혜택 (자동연동)</label>
-            <textarea id="lineGiftsSummary" rows="3" placeholder="사은품 목록 및 수령 조건 내용..." class="w-full p-2.5 bg-white border border-ssal-border rounded-xl resize-none text-[11px]"></textarea>
+          <div class="grid grid-cols-2 gap-2.5 bg-white p-3.5 rounded-2xl border border-slate-200">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">개통 가입일 (선택)</label>
+              <input type="date" id="lineActivationDate" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">탈출 예정일자 (선택)</label>
+              <input type="date" id="lineTargetDate" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-orange-600">
+            </div>
           </div>
 
           <div>
-            <label class="block font-bold text-ssal-subText mb-1">메모 / 특이사항</label>
-            <textarea id="lineMemo" rows="3" placeholder="예: M+3월 상품권 수령 예정, 유심 번호 등..." class="w-full p-2.5 bg-white border border-ssal-border rounded-xl resize-none"></textarea>
+            <label class="block font-bold text-slate-700 mb-1">사은품 목록 및 혜택 (자동연동)</label>
+            <textarea id="lineGiftsSummary" rows="3" placeholder="사은품 목록 및 수령 조건 내용..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl resize-none text-[11px]"></textarea>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">메모 / 특이사항</label>
+            <textarea id="lineMemo" rows="3" placeholder="예: M+3월 상품권 수령 예정, 유심 번호 등..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl resize-none"></textarea>
           </div>
 
         </div>
 
-        <div class="p-3 bg-white border-t border-ssal-border flex justify-end gap-2 shrink-0">
-          <button type="button" onclick="closeLineModal()" class="px-4 py-2 bg-[#eee9e0] text-ssal-subText font-bold rounded-xl text-xs">취소</button>
-          <button type="submit" class="px-5 py-2 bg-[#9e3412] text-white font-bold rounded-xl text-xs shadow-sm hover:bg-[#802a0e] transition">저장하기</button>
+        <div class="p-4 bg-white border-t border-slate-200 flex justify-end gap-2 shrink-0">
+          <button type="button" onclick="closeLineModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs border border-slate-200">취소</button>
+          <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-bold rounded-xl text-xs shadow-md shadow-orange-600/20 hover:bg-orange-700 transition">저장하기</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- BACKUP MODAL -->
-  <div id="textBackupModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-4 space-y-3 shadow-2xl border border-ssal-border text-xs">
+  <div id="textBackupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-3.5 shadow-2xl border border-slate-200 text-xs">
       <div class="flex justify-between items-center">
-        <h3 class="font-bold text-sm text-ssal-text"><i class="fa-solid fa-file-code text-ssal-accent mr-1"></i>데이터 백업/복원 코드</h3>
-        <button onclick="closeTextBackupModal()" class="text-ssal-subText p-1"><i class="fa-solid fa-xmark text-base"></i></button>
+        <h3 class="font-black text-sm text-slate-900"><i class="fa-solid fa-file-code text-orange-600 mr-1.5"></i>데이터 백업/복원 코드</h3>
+        <button onclick="closeTextBackupModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-base"></i></button>
       </div>
-      <p class="text-ssal-subText text-[11px] leading-relaxed">
+      <p class="text-slate-500 text-[11px] leading-relaxed font-medium">
         복원할 백업 코드를 아래 상자에 붙여넣은 뒤 [이 코드로 복원] 버튼을 누르세요.
       </p>
-      <textarea id="backupTextarea" rows="6" placeholder="백업 코드를 여기에 붙여넣으세요..." class="w-full p-2.5 bg-ssal-bg border border-ssal-border rounded-xl font-mono text-[11px] focus:outline-none focus:border-ssal-accent resize-none"></textarea>
+      <textarea id="backupTextarea" rows="6" placeholder="백업 코드를 여기에 붙여넣으세요..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-2xl font-mono text-[11px] focus:outline-none focus:border-orange-500 resize-none text-slate-800"></textarea>
       <div class="flex justify-between items-center pt-1 gap-2">
-        <button type="button" onclick="copyBackupText()" class="px-3 py-2 bg-[#f2ede4] hover:bg-[#e8e2d5] text-ssal-text font-bold rounded-xl text-xs flex items-center gap-1">
+        <button type="button" onclick="copyBackupText()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1 border border-slate-200">
           <i class="fa-regular fa-copy"></i> 코드 복사
         </button>
-        <button type="button" onclick="restoreFromTextarea()" class="px-4 py-2 bg-[#9e3412] hover:bg-[#802a0e] text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-sm">
+        <button type="button" onclick="restoreFromTextarea()" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-md shadow-orange-600/20">
           <i class="fa-solid fa-rotate-right"></i> 이 코드로 복원
         </button>
       </div>
@@ -537,6 +569,32 @@
     window.currentSelectedOptionIdx = 0;
     window.currentSelectedMonth = 10;
     window.isAdminMode = false;
+    window.isUseLocalStorage = false;
+
+    // 통신사별 브랜드 색상 스타일 맵핑 함수
+    window.getCarrierBadgeStyle = function(carrierName) {
+      if (!carrierName) return 'bg-slate-800 text-white shadow-slate-800/20';
+      const c = carrierName.trim();
+
+      if (c.includes('KT') || c.includes('케이티')) {
+        return 'bg-rose-600 text-white shadow-rose-600/20';
+      } else if (c.includes('SKT') || c.includes('SK') || c.includes('에스케이')) {
+        return 'bg-red-500 text-white shadow-red-500/20';
+      } else if (c.includes('LGU') || c.includes('유플러스') || c.includes('LG')) {
+        return 'bg-pink-600 text-white shadow-pink-600/20';
+      } else if (c.includes('헬로')) {
+        return 'bg-purple-600 text-white shadow-purple-600/20';
+      } else if (c.includes('세븐') || c.includes('7Mobile')) {
+        return 'bg-amber-500 text-white shadow-amber-500/20';
+      } else if (c.includes('아이즈')) {
+        return 'bg-sky-500 text-white shadow-sky-500/20';
+      } else if (c.includes('프리티')) {
+        return 'bg-emerald-600 text-white shadow-emerald-600/20';
+      } else if (c.includes('모빙')) {
+        return 'bg-indigo-600 text-white shadow-indigo-600/20';
+      }
+      return 'bg-slate-800 text-white shadow-slate-800/20';
+    }
 
     function checkAdminMode() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -566,6 +624,27 @@
       }
     }
 
+    // LocalStorage Fallback 도우미 함수
+    function loadFromLocalStorage() {
+      try {
+        const storedPlans = localStorage.getItem('ssalmuk_plans');
+        const storedLines = localStorage.getItem('ssalmuk_lines');
+        if (storedPlans) window.plansData = JSON.parse(storedPlans);
+        if (storedLines) window.linesData = JSON.parse(storedLines);
+      } catch(err) {
+        console.warn("LocalStorage 로드 실패:", err);
+      }
+    }
+
+    function saveToLocalStorage() {
+      try {
+        localStorage.setItem('ssalmuk_plans', JSON.stringify(window.plansData));
+        localStorage.setItem('ssalmuk_lines', JSON.stringify(window.linesData));
+      } catch(err) {
+        console.warn("LocalStorage 저장 실패:", err);
+      }
+    }
+
     async function loadStorage() {
       try {
         const querySnapshot = await getDocs(plansCollection);
@@ -585,10 +664,11 @@
         window.linesData = loadedLines;
 
       } catch (e) {
-        console.error("Firebase 로드 실패:", e);
+        console.warn("Firebase 권한 제한으로 LocalStorage 모드로 안전 전환합니다.");
+        window.isUseLocalStorage = true;
+        loadFromLocalStorage();
       }
       
-      // 데이터 로드 완료 후 화면 렌더링 강제 실행
       renderMainList();
       if (window.isAdminMode) {
         renderLinesList();
@@ -596,22 +676,28 @@
     }
 
     window.saveStorage = async function() {
-      try {
-        for (const plan of window.plansData) {
-          await setDoc(doc(db, "ssalmuk_plans", plan.id), plan);
+      saveToLocalStorage();
+      if (!window.isUseLocalStorage) {
+        try {
+          for (const plan of window.plansData) {
+            await setDoc(doc(db, "ssalmuk_plans", plan.id), plan);
+          }
+        } catch (e) {
+          console.warn("Firebase 저장 생략 (LocalStorage 사용):", e);
         }
-      } catch (e) {
-        console.error("Firebase 저장 중 오류:", e);
       }
     }
 
     window.saveLinesStorage = async function() {
-      try {
-        for (const line of window.linesData) {
-          await setDoc(doc(db, "ssalmuk_lines", line.id), line);
+      saveToLocalStorage();
+      if (!window.isUseLocalStorage) {
+        try {
+          for (const line of window.linesData) {
+            await setDoc(doc(db, "ssalmuk_lines", line.id), line);
+          }
+        } catch (e) {
+          console.warn("회선 Firebase 저장 생략 (LocalStorage 사용):", e);
         }
-      } catch (e) {
-        console.error("회선 데이터 저장 오류:", e);
       }
     }
 
@@ -633,13 +719,13 @@
       if (tabName === 'plans') {
         mainScreen.classList.remove("hidden");
         lineScreen.classList.add("hidden");
-        plansBtn.className = "px-4 py-2 rounded-xl bg-[#9e3412] text-white shadow-sm transition";
-        linesBtn.className = "px-4 py-2 rounded-xl bg-[#eee9e0] text-ssal-subText hover:bg-[#e2dccf] transition";
+        plansBtn.className = "px-4 py-2 rounded-xl bg-orange-600 text-white shadow-md transition flex items-center gap-1.5";
+        linesBtn.className = "px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5";
       } else {
         mainScreen.classList.add("hidden");
         lineScreen.classList.remove("hidden");
-        linesBtn.className = "px-4 py-2 rounded-xl bg-[#9e3412] text-white shadow-sm transition";
-        plansBtn.className = "px-4 py-2 rounded-xl bg-[#eee9e0] text-ssal-subText hover:bg-[#e2dccf] transition";
+        linesBtn.className = "px-4 py-2 rounded-xl bg-orange-600 text-white shadow-md transition flex items-center gap-1.5";
+        plansBtn.className = "px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5";
         renderLinesList();
       }
     }
@@ -743,7 +829,8 @@
       if (confirm("이 회선을 삭제하시겠습니까?")) {
         window.linesData = window.linesData.filter(l => l.id !== id);
         try {
-          await deleteDoc(doc(db, "ssalmuk_lines", id));
+          if (!window.isUseLocalStorage) await deleteDoc(doc(db, "ssalmuk_lines", id));
+          saveToLocalStorage();
         } catch(e) {
           console.error("회선 삭제 실패:", e);
         }
@@ -752,7 +839,7 @@
     }
 
     window.getLineStatusInfo = function(targetDateStr) {
-      if (!targetDateStr) return { text: '일정 미지정', class: 'bg-gray-100 text-gray-600', code: 'none' };
+      if (!targetDateStr) return { text: '일정 미지정', class: 'bg-slate-100 text-slate-600', code: 'none' };
 
       const today = new Date();
       today.setHours(0,0,0,0);
@@ -863,17 +950,17 @@
       const netCostEl = document.getElementById("dashNetCost");
       if (netSsal >= 0) {
         netCostEl.innerText = `+${window.fmt(netSsal)}원`;
-        netCostEl.className = "text-sm sm:text-base font-black text-ssal-green";
+        netCostEl.className = "text-sm sm:text-base font-black text-emerald-400";
       } else {
         netCostEl.innerText = `${window.fmt(netSsal)}원`;
-        netCostEl.className = "text-sm sm:text-base font-black text-rose-600";
+        netCostEl.className = "text-sm sm:text-base font-black text-rose-400";
       }
 
       if (totalLines === 0) {
         container.innerHTML = `
-          <div class="bg-white rounded-2xl border border-ssal-border p-8 text-center text-ssal-subText text-xs space-y-2">
-            <i class="fa-solid fa-mobile-screen text-3xl text-ssal-borderDark"></i>
-            <div class="font-bold text-ssal-text">등록된 회선이 없습니다.</div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-xs space-y-2 shadow-sm">
+            <i class="fa-solid fa-mobile-screen text-3xl text-slate-300"></i>
+            <div class="font-bold text-slate-800">등록된 회선이 없습니다.</div>
             <p class="text-[11px]">요금제 화면에서 [회선 관리자에 추가] 버튼을 눌러 손쉽게 등록해 보세요.</p>
           </div>
         `;
@@ -883,49 +970,52 @@
       window.linesData.forEach(line => {
         const statusInfo = window.getLineStatusInfo(line.targetDate);
         const thisMonthGift = window.calculateLineGiftValForCurrentMonth(line);
+        const carrierBadgeStyle = window.getCarrierBadgeStyle(line.carrier);
 
         container.innerHTML += `
-          <div class="bg-white rounded-2xl border border-ssal-border p-4 shadow-sm space-y-3">
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:border-slate-300 transition space-y-3">
             <div class="flex items-start justify-between gap-2">
-              <div>
-                <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md ${statusInfo.class}">${statusInfo.text}</span>
-                <h3 class="text-base font-extrabold text-ssal-text mt-1">${line.alias}</h3>
+              <div class="flex items-center gap-2">
+                <span class="shrink-0 px-2.5 py-1 text-xs font-black rounded-lg shadow-sm ${carrierBadgeStyle}">${line.carrier || '알뜰폰'}</span>
+                <div>
+                  <h3 class="text-base font-black text-slate-900">${line.alias}</h3>
+                </div>
               </div>
-              <span class="shrink-0 px-2.5 py-1 text-xs font-semibold bg-[#eee9e0] text-ssal-subText rounded-full">${line.carrier}</span>
+              <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md ${statusInfo.class}">${statusInfo.text}</span>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 text-xs bg-ssal-bg p-2.5 rounded-xl border border-ssal-border">
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/80">
               <div>
-                <span class="text-ssal-subText block text-[10px]">월 청구 요금</span>
-                <strong class="text-ssal-accent font-extrabold text-sm">${window.fmt(line.monthlyFee)}원</strong>
+                <span class="text-slate-500 block text-[10px] font-medium">월 청구 요금</span>
+                <strong class="text-orange-600 font-black text-sm">${window.fmt(line.monthlyFee)}원</strong>
               </div>
               <div>
-                <span class="text-ssal-subText block text-[10px]">${monthDisplayLabel} 수령 사은품</span>
-                <strong class="text-emerald-800 font-extrabold text-sm">+${window.fmt(thisMonthGift)}원</strong>
+                <span class="text-slate-500 block text-[10px] font-medium">${monthDisplayLabel} 수령 사은품</span>
+                <strong class="text-emerald-600 font-black text-sm">+${window.fmt(thisMonthGift)}원</strong>
               </div>
-              <div class="col-span-2 border-t border-ssal-border/60 pt-1.5 flex justify-between items-center">
-                <span class="text-ssal-subText text-[10px]">개통 가입일: <strong>${line.activationDate}</strong></span>
-                <span class="text-ssal-subText text-[10px]">탈출 예정: <strong class="text-ssal-text font-bold">${line.targetDate}</strong></span>
+              <div class="col-span-2 border-t border-slate-200/60 pt-2 flex justify-between items-center text-slate-600">
+                <span class="text-[10px]">개통 가입일: <strong>${line.activationDate}</strong></span>
+                <span class="text-[10px]">탈출 예정: <strong class="text-slate-900 font-bold">${line.targetDate}</strong></span>
               </div>
             </div>
 
             ${line.giftsSummary ? `
-              <div class="text-[11px] text-ssal-subText bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
-                <strong class="text-emerald-900 block text-[10px] mb-0.5"><i class="fa-solid fa-gift mr-1"></i>전체 사은품 내역</strong>
+              <div class="text-[11px] text-slate-600 bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
+                <strong class="text-emerald-900 block text-[10px] mb-0.5 font-bold"><i class="fa-solid fa-gift mr-1"></i>전체 사은품 내역</strong>
                 <pre class="whitespace-pre-wrap font-sans text-[11px]">${line.giftsSummary}</pre>
               </div>
             ` : ''}
 
             ${line.memo ? `
-              <div class="text-[11px] text-ssal-subText bg-amber-50/40 p-2 rounded-lg border border-amber-100">
-                <strong class="text-amber-900 block text-[10px] mb-0.5"><i class="fa-regular fa-sticky-note mr-1"></i>메모/특이사항</strong>
+              <div class="text-[11px] text-slate-600 bg-amber-50/70 p-2.5 rounded-xl border border-amber-200">
+                <strong class="text-amber-900 block text-[10px] mb-0.5 font-bold"><i class="fa-regular fa-sticky-note mr-1"></i>메모/특이사항</strong>
                 <div>${line.memo}</div>
               </div>
             ` : ''}
 
-            <div class="flex justify-end gap-1.5 pt-1 border-t border-ssal-border/60 text-xs">
-              <button onclick="openLineModal('${line.id}')" class="px-2.5 py-1 bg-[#eee9e0] hover:bg-[#e2dccf] text-ssal-text font-bold rounded-lg transition">수정</button>
-              <button onclick="deleteLine('${line.id}')" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-lg transition">삭제</button>
+            <div class="flex justify-end gap-1.5 pt-1 border-t border-slate-100 text-xs">
+              <button onclick="openLineModal('${line.id}')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition border border-slate-200">수정</button>
+              <button onclick="deleteLine('${line.id}')" class="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-lg transition border border-rose-200">삭제</button>
             </div>
           </div>
         `;
@@ -937,7 +1027,8 @@
       if (confirm("이 요금제를 정말 삭제하시겠습니까?")) {
         window.plansData = window.plansData.filter(p => p.id !== id);
         try {
-          await deleteDoc(doc(db, "ssalmuk_plans", id));
+          if (!window.isUseLocalStorage) await deleteDoc(doc(db, "ssalmuk_plans", id));
+          saveToLocalStorage();
         } catch(e) {
           console.error("삭제 동기화 오류:", e);
         }
@@ -1011,17 +1102,19 @@
 
       if (window.plansData.length === 0) {
         container.innerHTML = `
-          <div class="bg-white rounded-2xl border border-ssal-border p-8 text-center text-ssal-subText text-xs space-y-3">
-            <i class="fa-solid fa-folder-open text-3xl text-ssal-borderDark"></i>
-            <div class="font-bold text-ssal-text">등록된 요금제가 없습니다.</div>
+          <div class="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-500 text-xs space-y-3 shadow-sm">
+            <i class="fa-solid fa-folder-open text-4xl text-slate-300"></i>
+            <div class="font-bold text-slate-800 text-sm">등록된 요금제가 없습니다.</div>
           </div>
         `;
         return;
       }
 
+      const todayStr = new Date().toISOString().slice(0, 10);
+
       window.plansData.forEach((plan) => {
         const opt = (plan.options && plan.options[0]) ? plan.options[0] : { name: '기본 요금제', price: 0 };
-        const actDate = plan.activationDate || plan.startDate || "2026-10-16";
+        const actDate = plan.activationDate || plan.startDate || todayStr;
         const month1Fee = window.getMonth1Fee(actDate, opt.price);
         
         let maxNetSoFar = -Infinity;
@@ -1055,63 +1148,73 @@
         const netAvg = Math.round(maxNetSoFar / bestMonth);
         const bestMonthLabel = window.getMonthLabel(actDate, bestMonth);
 
-        const isEnded = plan.status === 'ended';
+        // 이벤트 종료일자 자동 판단 로직 (오늘 날짜와 비교)
+        const isAutoExpired = plan.eventEndDate && plan.eventEndDate < todayStr;
+        const isEnded = plan.status === 'ended' || isAutoExpired;
         const isEarlyEnded = plan.status === 'earlyEnded';
         const hasEndedStatus = isEnded || isEarlyEnded;
 
-        const cardOpacityClass = hasEndedStatus ? 'opacity-40 bg-gray-50' : 'bg-white';
+        const cardOpacityClass = hasEndedStatus ? 'opacity-50 bg-slate-100 border-slate-300' : 'bg-white border-slate-200 hover:border-orange-400 hover:shadow-ssal-hover';
         
         let statusBadgeHtml = '';
-        if (isEnded) {
-          statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-md">종료</span>`;
-        } else if (isEarlyEnded) {
-          statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-md">조기종료</span>`;
+        if (isEarlyEnded) {
+          statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 rounded-md">조기종료</span>`;
+        } else if (isEnded) {
+          statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200 rounded-md">종료</span>`;
         }
 
         let adminStatusButtonsHtml = '';
         if (window.isAdminMode) {
-          const endedBtnStyle = isEnded ? 'bg-rose-600 text-white font-bold' : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
-          const earlyBtnStyle = isEarlyEnded ? 'bg-amber-600 text-white font-bold' : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+          const endedBtnStyle = plan.status === 'ended' ? 'bg-rose-600 text-white font-bold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200';
+          const earlyBtnStyle = isEarlyEnded ? 'bg-amber-600 text-white font-bold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200';
 
           adminStatusButtonsHtml = `
-            <div class="flex items-center justify-between pt-2 border-t border-ssal-border/60" onclick="event.stopPropagation()">
-              <button onclick="openLineModalFromPlan(event, '${plan.id}')" class="px-2.5 py-1 text-[11px] font-bold text-ssal-green bg-emerald-50 hover:bg-emerald-100 rounded-lg transition border border-emerald-200 flex items-center gap-1">
+            <div class="flex items-center justify-between pt-2.5 border-t border-slate-100" onclick="event.stopPropagation()">
+              <button onclick="openLineModalFromPlan(event, '${plan.id}')" class="px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition border border-emerald-200 flex items-center gap-1">
                 <i class="fa-solid fa-plus"></i> 회선 관리자에 추가
               </button>
               <div class="flex gap-1">
-                <button onclick="togglePlanStatus(event, '${plan.id}', 'ended')" class="px-2 py-1 text-[10px] rounded transition ${endedBtnStyle}">종료</button>
+                <button onclick="togglePlanStatus(event, '${plan.id}', 'ended')" class="px-2 py-1 text-[10px] rounded transition ${endedBtnStyle}">수동종료</button>
                 <button onclick="togglePlanStatus(event, '${plan.id}', 'earlyEnded')" class="px-2 py-1 text-[10px] rounded transition ${earlyBtnStyle}">조기종료</button>
               </div>
             </div>
           `;
         }
 
+        const carrierBadgeStyle = window.getCarrierBadgeStyle(plan.carrier);
+
         const cardHtml = `
-          <div onclick="showDetailScreen('${plan.id}')" class="${cardOpacityClass} rounded-2xl border border-ssal-border p-4 shadow-sm hover:border-ssal-borderDark transition cursor-pointer space-y-2.5">
-            <div class="flex items-start justify-between gap-2">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="text-base font-extrabold text-ssal-text leading-snug">${plan.title || '제목 없음'}</h3>
-                ${statusBadgeHtml}
+          <div onclick="showDetailScreen('${plan.id}')" class="${cardOpacityClass} rounded-2xl border p-4 shadow-ssal transition cursor-pointer space-y-3">
+            
+            <div class="flex items-start gap-2.5">
+              <!-- 눈에 띄는 통신사 뱃지 -->
+              <span class="shrink-0 px-3 py-1 text-xs font-black rounded-lg shadow-sm ${carrierBadgeStyle}">${plan.carrier || '알뜰폰'}</span>
+              
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="text-base font-black text-slate-900 leading-snug">${plan.title || '제목 없음'}</h3>
+                  ${statusBadgeHtml}
+                </div>
               </div>
-              <span class="shrink-0 px-2.5 py-1 text-xs font-semibold bg-[#eee9e0] text-ssal-subText rounded-full">${plan.carrier || '알뜰폰'}</span>
             </div>
 
-            <div class="text-xs text-ssal-subText flex justify-between items-center">
-              <span>이벤트: ${plan.startDate || ''} ~ ${plan.eventEndDate || ''}</span>
-              <span>개통일: <strong class="text-ssal-text font-bold">${actDate}</strong></span>
-            </div>
-
-            <div class="pt-0.5 space-y-0.5">
-              <div class="text-lg font-black text-ssal-green flex items-baseline gap-1">
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-1">
+              <div class="text-lg font-black text-emerald-600 flex items-baseline gap-1">
                 <span>최대 ${maxNetSoFar >= 0 ? '+' : ''}${window.fmt(maxNetSoFar)}원</span>
               </div>
-              <div class="text-xs text-ssal-green font-semibold">
+              <div class="text-xs text-emerald-700 font-bold">
                 ${bestMonthLabel}까지 유지 시 최대 (${bestMonth}개월) · 월 평균 ${netAvg >= 0 ? '+' : ''}${window.fmt(netAvg)}원
               </div>
             </div>
 
-            <div class="text-xs font-semibold text-ssal-green pt-1 flex justify-between items-center">
-              <span>${opt.name}</span>
+            <div class="text-xs text-slate-500 flex justify-between items-center pt-0.5">
+              <span>이벤트: ${plan.startDate || ''} ~ ${plan.eventEndDate || ''}</span>
+              <span>개통일: <strong class="text-slate-800 font-bold">${actDate}</strong></span>
+            </div>
+
+            <div class="text-xs font-bold text-slate-700 flex justify-between items-center pt-1 border-t border-slate-100">
+              <span class="truncate">${opt.name}</span>
+              <span class="shrink-0 text-orange-600 font-extrabold ml-2">월 ${window.fmt(opt.price)}원</span>
             </div>
 
             ${adminStatusButtonsHtml}
@@ -1131,7 +1234,10 @@
 
       const actDate = plan.activationDate || plan.startDate || "-";
 
-      document.getElementById("detailCarrierBadge").innerText = plan.carrier || '알뜰폰';
+      const badgeEl = document.getElementById("detailCarrierBadge");
+      badgeEl.innerText = plan.carrier || '알뜰폰';
+      badgeEl.className = `shrink-0 px-3 py-1 text-xs font-black rounded-lg shadow-sm ${window.getCarrierBadgeStyle(plan.carrier)}`;
+
       document.getElementById("detailTitle").innerText = plan.title || '제목 없음';
       document.getElementById("detailActivationDate").innerText = actDate;
       document.getElementById("detailCode").innerText = plan.code || "없음";
@@ -1178,7 +1284,7 @@
         const isSelected = m === window.currentSelectedMonth;
         const mLabel = window.getMonthLabel(actDate, m);
         tabsContainer.innerHTML += `
-          <button id="monthTab-${m}" onclick="selectMonthTab(${m})" class="py-2 text-xs font-bold rounded-lg transition border ${isSelected ? 'bg-black text-white border-black' : 'bg-white text-ssal-subText border-ssal-border hover:bg-ssal-bg'}">
+          <button id="monthTab-${m}" onclick="selectMonthTab(${m})" class="py-2 text-xs font-bold rounded-xl transition border ${isSelected ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
             ${mLabel} (${m}M)
           </button>
         `;
@@ -1208,14 +1314,14 @@
         }
 
         giftsContainer.innerHTML += `
-          <div class="bg-white rounded-xl border border-ssal-border p-3 flex justify-between items-center shadow-sm">
+          <div class="bg-white rounded-2xl border border-slate-200 p-3.5 flex justify-between items-center shadow-sm">
             <div>
-              <div class="font-bold text-ssal-text">${g.name}</div>
-              <div class="text-[10px] text-ssal-subText mt-0.5">${g.cond || ''}</div>
+              <div class="font-bold text-slate-900">${g.name}</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">${g.cond || ''}</div>
             </div>
             <div class="text-right shrink-0">
-              <span class="font-bold text-ssal-accent">+${window.fmt(g.val)}원</span>
-              <div class="text-[10px] font-semibold text-ssal-subText">${periodText}</div>
+              <span class="font-black text-orange-600 text-sm">+${window.fmt(g.val)}원</span>
+              <div class="text-[10px] font-bold text-slate-500">${periodText}</div>
             </div>
           </div>
         `;
@@ -1243,9 +1349,9 @@
         if (btn) {
           const mLabel = window.getMonthLabel(actDate, m);
           if (m === month) {
-            btn.className = "py-2 text-xs font-bold rounded-lg transition border bg-black text-white border-black";
+            btn.className = "py-2 text-xs font-bold rounded-xl transition border bg-slate-900 text-white border-slate-900 shadow-sm";
           } else {
-            btn.className = "py-2 text-xs font-bold rounded-lg transition border bg-white text-ssal-subText border-ssal-border hover:bg-ssal-bg";
+            btn.className = "py-2 text-xs font-bold rounded-xl transition border bg-white text-slate-600 border-slate-200 hover:bg-slate-50";
           }
           btn.innerText = `${mLabel} (${m}M)`;
         }
@@ -1316,27 +1422,27 @@
         sumGift += item.gift;
       });
 
-      let headerRow = `<tr class="border-b border-emerald-100 bg-emerald-50/60 font-bold text-emerald-950"><th class="p-1.5 text-left min-w-[70px]">구분</th>`;
-      let feeRow = `<tr class="border-b border-ssal-border/50"><td class="p-1.5 font-semibold text-ssal-subText text-left">월요금</td>`;
-      let giftRow = `<tr class="border-b border-ssal-border/50"><td class="p-1.5 font-semibold text-ssal-subText text-left">사은품</td>`;
-      let netRow = `<tr class="font-bold"><td class="p-1.5 font-semibold text-ssal-subText text-left whitespace-nowrap">누적순이익</td>`;
+      let headerRow = `<tr class="border-b border-emerald-200 bg-emerald-100/70 font-bold text-emerald-950"><th class="p-2 text-left min-w-[70px]">구분</th>`;
+      let feeRow = `<tr class="border-b border-slate-200/60"><td class="p-2 font-semibold text-slate-500 text-left">월요금</td>`;
+      let giftRow = `<tr class="border-b border-slate-200/60"><td class="p-2 font-semibold text-slate-500 text-left">사은품</td>`;
+      let netRow = `<tr class="font-bold"><td class="p-2 font-semibold text-slate-500 text-left whitespace-nowrap">누적순이익</td>`;
 
       targetMonthlyList.forEach((item, idx) => {
         const colLabel = window.getMonthLabel(actDate, idx + 1);
-        headerRow += `<th class="p-1.5 px-2.5 whitespace-nowrap">${colLabel}</th>`;
-        feeRow += `<td class="p-1.5 px-2.5 text-ssal-text whitespace-nowrap">${window.fmt(item.fee)}원</td>`;
-        giftRow += `<td class="p-1.5 px-2.5 text-ssal-accent whitespace-nowrap">${item.gift > 0 ? '+' + window.fmt(item.gift) + '원' : '0원'}</td>`;
+        headerRow += `<th class="p-2 px-3 whitespace-nowrap">${colLabel}</th>`;
+        feeRow += `<td class="p-2 px-3 text-slate-800 whitespace-nowrap">${window.fmt(item.fee)}원</td>`;
+        giftRow += `<td class="p-2 px-3 text-orange-600 font-bold whitespace-nowrap">${item.gift > 0 ? '+' + window.fmt(item.gift) + '원' : '0원'}</td>`;
         
-        const netCls = item.netCumulative >= 0 ? 'text-ssal-green' : 'text-rose-600';
-        netRow += `<td class="p-1.5 px-2.5 ${netCls} whitespace-nowrap">${item.netCumulative >= 0 ? '+' : ''}${window.fmt(item.netCumulative)}원</td>`;
+        const netCls = item.netCumulative >= 0 ? 'text-emerald-600 font-black' : 'text-rose-600 font-black';
+        netRow += `<td class="p-2 px-3 ${netCls} whitespace-nowrap">${item.netCumulative >= 0 ? '+' : ''}${window.fmt(item.netCumulative)}원</td>`;
       });
 
-      headerRow += `<th class="p-1.5 px-3 bg-emerald-100/80 text-emerald-900 border-l border-emerald-200 whitespace-nowrap">합계</th></tr>`;
-      feeRow += `<td class="p-1.5 px-3 font-bold text-ssal-text bg-emerald-50/40 border-l border-emerald-100 whitespace-nowrap">${window.fmt(sumFee)}원</td></tr>`;
-      giftRow += `<td class="p-1.5 px-3 font-bold text-ssal-accent bg-emerald-50/40 border-l border-emerald-100 whitespace-nowrap">+${window.fmt(sumGift)}원</td></tr>`;
+      headerRow += `<th class="p-2 px-3.5 bg-emerald-200/80 text-emerald-950 border-l border-emerald-300 whitespace-nowrap">합계</th></tr>`;
+      feeRow += `<td class="p-2 px-3.5 font-bold text-slate-900 bg-emerald-50 border-l border-emerald-200 whitespace-nowrap">${window.fmt(sumFee)}원</td></tr>`;
+      giftRow += `<td class="p-2 px-3.5 font-black text-orange-600 bg-emerald-50 border-l border-emerald-200 whitespace-nowrap">+${window.fmt(sumGift)}원</td></tr>`;
       
-      const totalNetCls = maxNetSoFar >= 0 ? 'text-ssal-green font-extrabold' : 'text-rose-600 font-extrabold';
-      netRow += `<td class="p-1.5 px-3 ${totalNetCls} bg-emerald-50/40 border-l border-emerald-100 whitespace-nowrap">${maxNetSoFar >= 0 ? '+' : ''}${window.fmt(maxNetSoFar)}원</td></tr>`;
+      const totalNetCls = maxNetSoFar >= 0 ? 'text-emerald-600 font-black text-sm' : 'text-rose-600 font-black text-sm';
+      netRow += `<td class="p-2 px-3.5 ${totalNetCls} bg-emerald-50 border-l border-emerald-200 whitespace-nowrap">${maxNetSoFar >= 0 ? '+' : ''}${window.fmt(maxNetSoFar)}원</td></tr>`;
 
       document.getElementById("maxProfitTable").innerHTML = headerRow + feeRow + giftRow + netRow;
 
@@ -1391,10 +1497,10 @@
       const netTotalEl = document.getElementById("calcNetTotal");
       if (netTotal >= 0) {
         netTotalEl.innerText = `+${window.fmt(netTotal)}원`;
-        netTotalEl.className = "text-base font-extrabold text-ssal-green";
+        netTotalEl.className = "text-base font-black text-emerald-600";
       } else {
         netTotalEl.innerText = `${window.fmt(netTotal)}원`;
-        netTotalEl.className = "text-base font-extrabold text-rose-600";
+        netTotalEl.className = "text-base font-black text-rose-600";
       }
 
       document.getElementById("calcMonthlyAvg").innerText = `${netAvg >= 0 ? '+' : ''}${window.fmt(netAvg)}원`;
@@ -1405,23 +1511,23 @@
 
       monthBreakdowns.forEach(item => {
         timelineBox.innerHTML += `
-          <div class="bg-white rounded-xl border border-ssal-border p-3 space-y-1.5 text-xs shadow-sm">
-            <div class="font-bold text-ssal-text flex justify-between border-b border-ssal-border pb-1.5">
-              <span>${item.monthLabel} (${item.month}개월차) ${item.month === 1 ? '<span class="text-[10px] text-amber-700 font-normal">(개통일 일할적용)</span>' : ''}</span>
-              <span class="${item.net >= 0 ? 'text-ssal-green' : 'text-rose-600'} font-extrabold">
+          <div class="bg-white rounded-2xl border border-slate-200 p-3.5 space-y-2 text-xs shadow-sm">
+            <div class="font-bold text-slate-900 flex justify-between border-b border-slate-100 pb-2">
+              <span>${item.monthLabel} (${item.month}개월차) ${item.month === 1 ? '<span class="text-[10px] text-amber-700 font-medium">(개통일 일할적용)</span>' : ''}</span>
+              <span class="${item.net >= 0 ? 'text-emerald-600' : 'text-rose-600'} font-black text-sm">
                 ${item.net >= 0 ? '+' : ''}${window.fmt(item.net)}원
               </span>
             </div>
-            <div class="flex justify-between text-ssal-subText">
+            <div class="flex justify-between text-slate-500">
               <span>청구금</span>
-              <span>${window.fmt(item.fee)}원</span>
+              <span class="font-medium text-slate-800">${window.fmt(item.fee)}원</span>
             </div>
-            <div class="flex justify-between text-ssal-subText">
+            <div class="flex justify-between text-slate-500">
               <span>사은품 수령</span>
-              <span class="font-bold text-ssal-accent">${window.fmt(item.gifts)}원</span>
+              <span class="font-bold text-orange-600">${window.fmt(item.gifts)}원</span>
             </div>
             ${item.giftsList.length > 0 ? `
-              <div class="text-[10px] text-ssal-subText/80 pt-1 border-t border-dashed border-ssal-border">
+              <div class="text-[10px] text-slate-500 pt-1.5 border-t border-dashed border-slate-200 font-medium">
                 수령혜택: ${item.giftsList.join(', ')}
               </div>
             ` : ''}
@@ -1492,11 +1598,11 @@
       if (!window.isAdminMode) return;
       const container = document.getElementById("formOptionsContainer");
       const div = document.createElement("div");
-      div.className = "flex items-center gap-1.5 option-row";
+      div.className = "flex items-center gap-2 option-row";
       div.innerHTML = `
-        <input type="text" placeholder="요금제명" value="${name}" class="opt-name flex-1 min-w-0 p-1.5 bg-white border border-ssal-border rounded-lg text-xs">
-        <input type="number" placeholder="월요금(원)" value="${price}" class="opt-price w-20 sm:w-24 shrink-0 p-1.5 bg-white border border-ssal-border rounded-lg text-xs">
-        <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 p-1 shrink-0"><i class="fa-solid fa-xmark"></i></button>
+        <input type="text" placeholder="요금제명" value="${name}" class="opt-name flex-1 min-w-0 p-2 bg-white border border-slate-300 rounded-xl text-xs">
+        <input type="number" placeholder="월요금(원)" value="${price}" class="opt-price w-24 sm:w-28 shrink-0 p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-orange-600">
+        <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 p-1 shrink-0"><i class="fa-solid fa-xmark"></i></button>
       `;
       container.appendChild(div);
     }
@@ -1505,29 +1611,29 @@
       if (!window.isAdminMode) return;
       const container = document.getElementById("formGiftsContainer");
       const div = document.createElement("div");
-      div.className = "bg-white p-2 border border-ssal-border rounded-lg space-y-1.5 gift-row";
+      div.className = "bg-white p-3 border border-slate-200 rounded-2xl space-y-2 gift-row shadow-sm";
 
       div.innerHTML = `
         <div class="flex items-center gap-2">
-          <input type="text" placeholder="사은품 명칭" value="${name}" class="gift-name flex-1 p-1.5 bg-ssal-bg border border-ssal-border rounded">
-          <input type="number" placeholder="가치(원)" value="${val}" class="gift-val w-24 p-1.5 bg-ssal-bg border border-ssal-border rounded">
-          <button type="button" onclick="this.closest('.gift-row').remove()" class="text-rose-500 px-1"><i class="fa-solid fa-xmark"></i></button>
+          <input type="text" placeholder="사은품 명칭" value="${name}" class="gift-name flex-1 p-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-800">
+          <input type="number" placeholder="가치(원)" value="${val}" class="gift-val w-28 p-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-orange-600">
+          <button type="button" onclick="this.closest('.gift-row').remove()" class="text-rose-500 hover:text-rose-700 px-1"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="flex items-center gap-2 text-[11px] flex-wrap">
-          <input type="text" placeholder="지급 조건 설명" value="${cond}" class="gift-cond flex-1 min-w-[120px] p-1 bg-ssal-bg border border-ssal-border rounded">
+          <input type="text" placeholder="지급 조건 설명" value="${cond}" class="gift-cond flex-1 min-w-[120px] p-1.5 bg-slate-50 border border-slate-300 rounded-xl">
           
           <div class="flex items-center gap-1 shrink-0">
-            <span class="text-ssal-subText font-bold">시작월: M+</span>
-            <input type="number" min="0" max="24" value="${startOffset}" class="gift-start-offset w-10 p-1 bg-ssal-bg border border-ssal-border rounded text-center font-bold text-ssal-accent">
+            <span class="text-slate-500 font-bold">시작월: M+</span>
+            <input type="number" min="0" max="24" value="${startOffset}" class="gift-start-offset w-10 p-1 bg-slate-50 border border-slate-300 rounded-lg text-center font-black text-orange-600">
           </div>
 
           <div class="flex items-center gap-1 shrink-0">
-            <input type="number" min="1" max="24" value="${durationMonths}" class="gift-duration w-10 p-1 bg-ssal-bg border border-ssal-border rounded text-center font-bold text-ssal-accent">
-            <span class="text-ssal-subText font-bold">개월간</span>
+            <input type="number" min="1" max="24" value="${durationMonths}" class="gift-duration w-10 p-1 bg-slate-50 border border-slate-300 rounded-lg text-center font-black text-orange-600">
+            <span class="text-slate-500 font-bold">개월간</span>
           </div>
 
-          <label class="flex items-center gap-1 font-semibold text-ssal-text shrink-0">
-            <input type="checkbox" class="gift-monthly" ${isMonthly ? 'checked' : ''}> 매월지급
+          <label class="flex items-center gap-1 font-bold text-slate-700 shrink-0 cursor-pointer">
+            <input type="checkbox" class="gift-monthly accent-orange-600 rounded" ${isMonthly ? 'checked' : ''}> 매월지급
           </label>
         </div>
       `;
