@@ -103,13 +103,18 @@
       </div>
 
       <p class="text-xs text-slate-500 leading-relaxed font-medium">
-        알뜰폰 사은품을 요금제·유지기간 및 종료월 지정, 일할계산을 통해 월별 순이익으로 정확하게 산출합니다.
+        알뜰폰 사은품을 요금제·유지기간 및 종료월 지정, 일할계산을 통해 월별 순이익으로 산출합니다.
       </p>
 
       <div class="flex items-center justify-between pt-1 pb-1 text-xs border-b border-slate-200/80 pb-2.5">
-        <span id="totalPlansCount" class="font-bold text-slate-600 flex items-center gap-1">
-          <i class="fa-solid fa-layer-group text-slate-400"></i> 총 0개 요금제
-        </span>
+        <div class="flex items-center gap-2">
+          <span id="totalPlansCount" class="font-bold text-slate-600 flex items-center gap-1">
+            <i class="fa-solid fa-layer-group text-slate-400"></i> 총 0개 요금제
+          </span>
+          <span id="visitorCountBadge" class="hidden font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full text-[11px] items-center gap-1">
+            <i class="fa-solid fa-eye text-[10px]"></i> 방문자 <span id="visitorCountNum">0</span>명
+          </span>
+        </div>
         
         <div id="adminControlBar" class="flex items-center gap-2 flex-wrap justify-end hidden">
           <button onclick="exportDataHTML()" title="백업 파일 다운로드 및 복사" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition text-[11px] font-bold flex items-center gap-1 border border-slate-200">
@@ -126,6 +131,18 @@
       </div>
 
       <div id="plansList" class="space-y-3.5"></div>
+
+      <!-- 종료된 요금제 관리 아코디언 섹션 -->
+      <div id="endedPlansSection" class="pt-4 border-t border-slate-200/80 space-y-3 hidden">
+        <button onclick="toggleEndedPlansList()" class="w-full flex items-center justify-between p-3 bg-slate-200/60 hover:bg-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-box-archive text-slate-500"></i>
+            <span>종료된 요금제 목록 (<span id="endedPlansCount">0</span>개)</span>
+          </span>
+          <i id="endedPlansToggleIcon" class="fa-solid fa-chevron-down transition-transform duration-200"></i>
+        </button>
+        <div id="endedPlansList" class="space-y-3.5 hidden"></div>
+      </div>
     </div>
 
     <!-- ==================== LINE MANAGER SCREEN (관리자 전용) ==================== -->
@@ -233,9 +250,11 @@
           <span>개통일 <strong id="detailActivationDate" class="text-slate-800 font-bold">-</strong> · 코드 <strong id="detailCode" class="text-orange-600 font-bold">-</strong></span>
         </div>
 
-        <div id="detailEventPeriodBox" class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex justify-between items-center">
-          <span>이벤트 기간</span>
-          <strong id="detailEventPeriodText" class="text-slate-900 font-bold">-</strong>
+        <div id="detailEventPeriodBox" class="text-xs text-slate-700 bg-amber-50/80 border border-amber-200 p-3 rounded-xl flex justify-between items-center shadow-sm">
+          <span class="font-bold flex items-center gap-1 text-amber-900">
+            <i class="fa-solid fa-calendar-days text-orange-600"></i> 이벤트 기간
+          </span>
+          <strong id="detailEventPeriodText" class="text-slate-900 font-extrabold text-xs sm:text-sm bg-white px-2.5 py-1 rounded-lg border border-amber-200 shadow-xs">-</strong>
         </div>
 
         <button id="btnEventUrl" onclick="openEventUrl()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 mt-2">
@@ -546,7 +565,7 @@
   <!-- Firebase Integration Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnKOnOEjoZOOJpK2T2mpyRmJr5s2Kkdmo",
@@ -570,6 +589,61 @@
     window.currentSelectedMonth = 10;
     window.isAdminMode = false;
     window.isUseLocalStorage = false;
+    window.isEndedPlansOpen = false;
+
+    window.toggleEndedPlansList = function() {
+      window.isEndedPlansOpen = !window.isEndedPlansOpen;
+      const container = document.getElementById("endedPlansList");
+      const icon = document.getElementById("endedPlansToggleIcon");
+      if (container && icon) {
+        if (window.isEndedPlansOpen) {
+          container.classList.remove("hidden");
+          icon.classList.add("rotate-180");
+        } else {
+          container.classList.add("hidden");
+          icon.classList.remove("rotate-180");
+        }
+      }
+    }
+
+    // 방문자 수 처리 함수
+    async function initVisitorCounter() {
+      try {
+        const statsDocRef = doc(db, "ssalmuk_stats", "visitor_count");
+        const hasVisited = sessionStorage.getItem("ssalmuk_visited");
+
+        let currentCount = 0;
+
+        if (!hasVisited) {
+          // 세션 첫 방문 시 카운트 증가
+          sessionStorage.setItem("ssalmuk_visited", "true");
+          const snap = await getDoc(statsDocRef);
+          if (snap.exists()) {
+            await updateDoc(statsDocRef, { count: increment(1) });
+            currentCount = (snap.data().count || 0) + 1;
+          } else {
+            currentCount = 1;
+            await setDoc(statsDocRef, { count: 1 });
+          }
+        } else {
+          // 이미 접속 중인 세션은 조회만 수행
+          const snap = await getDoc(statsDocRef);
+          if (snap.exists()) {
+            currentCount = snap.data().count || 0;
+          }
+        }
+
+        const badgeEl = document.getElementById("visitorCountBadge");
+        const numEl = document.getElementById("visitorCountNum");
+        if (badgeEl && numEl) {
+          numEl.innerText = currentCount.toLocaleString();
+          badgeEl.classList.remove("hidden");
+          badgeEl.classList.add("flex");
+        }
+      } catch (err) {
+        console.warn("방문자 카운터 로드 실패 (권한 또는 로컬 스토리지 모드):", err);
+      }
+    }
 
     // 통신사별 브랜드 색상 스타일 맵핑 함수
     window.getCarrierBadgeStyle = function(carrierName) {
@@ -721,6 +795,7 @@
     window.onload = async function() {
       applyAdminUIMode();
       await loadStorage();
+      await initVisitorCounter();
     };
 
     window.switchMainTab = function(tabName) {
@@ -1110,135 +1185,175 @@
     }
 
     function renderMainList() {
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      // 진행 중 / 종료 분리
+      const activePlans = [];
+      const endedPlans = [];
+
+      window.plansData.forEach(plan => {
+        const isAutoExpired = plan.eventEndDate && plan.eventEndDate < todayStr;
+        const isEnded = plan.status === 'ended' || isAutoExpired || plan.status === 'earlyEnded';
+        if (isEnded) {
+          endedPlans.push(plan);
+        } else {
+          activePlans.push(plan);
+        }
+      });
+
       const countEl = document.getElementById("totalPlansCount");
-      if (countEl) countEl.innerText = `총 ${window.plansData.length}개 요금제`;
+      if (countEl) countEl.innerText = `총 ${activePlans.length}개 요금제`;
       
       const container = document.getElementById("plansList");
       if (!container) return;
       container.innerHTML = "";
 
-      if (window.plansData.length === 0) {
+      if (activePlans.length === 0) {
         container.innerHTML = `
           <div class="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-500 text-xs space-y-3 shadow-sm">
             <i class="fa-solid fa-folder-open text-4xl text-slate-300"></i>
-            <div class="font-bold text-slate-800 text-sm">등록된 요금제가 없습니다.</div>
+            <div class="font-bold text-slate-800 text-sm">현재 진행 중인 요금제가 없습니다.</div>
           </div>
         `;
-        return;
+      } else {
+        activePlans.forEach(plan => {
+          container.innerHTML += renderPlanCardHtml(plan, todayStr);
+        });
       }
 
-      const todayStr = new Date().toISOString().slice(0, 10);
+      // 종료된 요금제 섹션 처리
+      const endedSection = document.getElementById("endedPlansSection");
+      const endedList = document.getElementById("endedPlansList");
+      const endedCountEl = document.getElementById("endedPlansCount");
 
-      window.plansData.forEach((plan) => {
-        const opt = (plan.options && plan.options[0]) ? plan.options[0] : { name: '기본 요금제', price: 0 };
-        const actDate = plan.activationDate || plan.startDate || todayStr;
-        const month1Fee = window.getMonth1Fee(actDate, opt.price);
-        
-        let maxNetSoFar = -Infinity;
-        let bestMonth = 1;
-        let tempBillTotal = 0;
-        let tempGiftsTotal = 0;
+      if (endedPlans.length > 0) {
+        endedSection.classList.remove("hidden");
+        endedCountEl.innerText = endedPlans.length;
+        endedList.innerHTML = "";
+        endedPlans.forEach(plan => {
+          endedList.innerHTML += renderPlanCardHtml(plan, todayStr);
+        });
+      } else {
+        endedSection.classList.add("hidden");
+      }
+    }
 
-        for (let m = 1; m <= 12; m++) {
-          let mFee = (m === 1) ? month1Fee : opt.price;
-          tempBillTotal += mFee;
+    function renderPlanCardHtml(plan, todayStr) {
+      const opt = (plan.options && plan.options[0]) ? plan.options[0] : { name: '기본 요금제', price: 0 };
+      const actDate = plan.activationDate || plan.startDate || todayStr;
+      const month1Fee = window.getMonth1Fee(actDate, opt.price);
+      
+      let maxNetSoFar = -Infinity;
+      let bestMonth = 1;
+      let tempBillTotal = 0;
+      let tempGiftsTotal = 0;
 
-          let mGift = 0;
-          (plan.gifts || []).forEach(g => {
-            const startM = g.month || 1;
-            const endM = g.endMonth || (g.isMonthly ? 12 : startM);
-            if (g.isMonthly) {
-              if (m >= startM && m <= endM) mGift += g.val;
-            } else {
-              if (m === startM) mGift += g.val;
-            }
-          });
-          tempGiftsTotal += mGift;
-          let runningNet = tempGiftsTotal - tempBillTotal;
+      for (let m = 1; m <= 12; m++) {
+        let mFee = (m === 1) ? month1Fee : opt.price;
+        tempBillTotal += mFee;
 
-          if (runningNet > maxNetSoFar) {
-            maxNetSoFar = runningNet;
-            bestMonth = m;
+        let mGift = 0;
+        (plan.gifts || []).forEach(g => {
+          const startM = g.month || 1;
+          const endM = g.endMonth || (g.isMonthly ? 12 : startM);
+          if (g.isMonthly) {
+            if (m >= startM && m <= endM) mGift += g.val;
+          } else {
+            if (m === startM) mGift += g.val;
           }
+        });
+        tempGiftsTotal += mGift;
+        let runningNet = tempGiftsTotal - tempBillTotal;
+
+        if (runningNet > maxNetSoFar) {
+          maxNetSoFar = runningNet;
+          bestMonth = m;
         }
+      }
 
-        const netAvg = Math.round(maxNetSoFar / bestMonth);
-        const bestMonthLabel = window.getMonthLabel(actDate, bestMonth);
+      const netAvg = Math.round(maxNetSoFar / bestMonth);
+      const bestMonthLabel = window.getMonthLabel(actDate, bestMonth);
 
-        // 이벤트 종료일자 자동 판단 로직 (오늘 날짜와 비교)
-        const isAutoExpired = plan.eventEndDate && plan.eventEndDate < todayStr;
-        const isEnded = plan.status === 'ended' || isAutoExpired;
-        const isEarlyEnded = plan.status === 'earlyEnded';
-        const hasEndedStatus = isEnded || isEarlyEnded;
+      const isAutoExpired = plan.eventEndDate && plan.eventEndDate < todayStr;
+      const isEnded = plan.status === 'ended' || isAutoExpired;
+      const isEarlyEnded = plan.status === 'earlyEnded';
+      const hasEndedStatus = isEnded || isEarlyEnded;
 
-        const cardOpacityClass = hasEndedStatus ? 'opacity-50 bg-slate-100 border-slate-300' : 'bg-white border-slate-200 hover:border-orange-400 hover:shadow-ssal-hover';
-        
-        let statusBadgeHtml = '';
-        if (isEarlyEnded) {
-          statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 rounded-md">조기종료</span>`;
-        } else if (isEnded) {
-          statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200 rounded-md">종료</span>`;
-        }
+      const cardOpacityClass = hasEndedStatus ? 'opacity-60 bg-slate-100/90 border-slate-300' : 'bg-white border-slate-200 hover:border-orange-400 hover:shadow-ssal-hover';
+      
+      let statusBadgeHtml = '';
+      if (isEarlyEnded) {
+        statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 rounded-md">조기종료</span>`;
+      } else if (isEnded) {
+        statusBadgeHtml = `<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200 rounded-md">종료</span>`;
+      }
 
-        let adminStatusButtonsHtml = '';
-        if (window.isAdminMode) {
-          const endedBtnStyle = plan.status === 'ended' ? 'bg-rose-600 text-white font-bold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200';
-          const earlyBtnStyle = isEarlyEnded ? 'bg-amber-600 text-white font-bold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200';
+      let adminStatusButtonsHtml = '';
+      if (window.isAdminMode) {
+        const endedBtnStyle = plan.status === 'ended' ? 'bg-rose-600 text-white font-bold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200';
+        const earlyBtnStyle = isEarlyEnded ? 'bg-amber-600 text-white font-bold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200';
 
-          adminStatusButtonsHtml = `
-            <div class="flex items-center justify-between pt-2.5 border-t border-slate-100" onclick="event.stopPropagation()">
-              <button onclick="openLineModalFromPlan(event, '${plan.id}')" class="px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition border border-emerald-200 flex items-center gap-1">
-                <i class="fa-solid fa-plus"></i> 회선 관리자에 추가
-              </button>
-              <div class="flex gap-1">
-                <button onclick="togglePlanStatus(event, '${plan.id}', 'ended')" class="px-2 py-1 text-[10px] rounded transition ${endedBtnStyle}">수동종료</button>
-                <button onclick="togglePlanStatus(event, '${plan.id}', 'earlyEnded')" class="px-2 py-1 text-[10px] rounded transition ${earlyBtnStyle}">조기종료</button>
-              </div>
+        adminStatusButtonsHtml = `
+          <div class="flex items-center justify-between pt-2.5 border-t border-slate-100" onclick="event.stopPropagation()">
+            <button onclick="openLineModalFromPlan(event, '${plan.id}')" class="px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition border border-emerald-200 flex items-center gap-1">
+              <i class="fa-solid fa-plus"></i> 회선 관리자에 추가
+            </button>
+            <div class="flex gap-1">
+              <button onclick="togglePlanStatus(event, '${plan.id}', 'ended')" class="px-2 py-1 text-[10px] rounded transition ${endedBtnStyle}">수동종료</button>
+              <button onclick="togglePlanStatus(event, '${plan.id}', 'earlyEnded')" class="px-2 py-1 text-[10px] rounded transition ${earlyBtnStyle}">조기종료</button>
             </div>
-          `;
-        }
-
-        const carrierBadgeStyle = window.getCarrierBadgeStyle(plan.carrier);
-
-        const cardHtml = `
-          <div onclick="showDetailScreen('${plan.id}')" class="${cardOpacityClass} rounded-2xl border p-4 shadow-ssal transition cursor-pointer space-y-3">
-            
-            <div class="flex items-start gap-2.5">
-              <!-- 눈에 띄는 통신사 뱃지 -->
-              <span class="shrink-0 px-3 py-1 text-xs font-black rounded-lg shadow-sm ${carrierBadgeStyle}">${plan.carrier || '알뜰폰'}</span>
-              
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <h3 class="text-base font-black text-slate-900 leading-snug">${plan.title || '제목 없음'}</h3>
-                  ${statusBadgeHtml}
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-1">
-              <div class="text-lg font-black text-emerald-600 flex items-baseline gap-1">
-                <span>최대 ${maxNetSoFar >= 0 ? '+' : ''}${window.fmt(maxNetSoFar)}원</span>
-              </div>
-              <div class="text-xs text-emerald-700 font-bold">
-                ${bestMonthLabel}까지 유지 시 최대 (${bestMonth}개월) · 월 평균 ${netAvg >= 0 ? '+' : ''}${window.fmt(netAvg)}원
-              </div>
-            </div>
-
-            <div class="text-xs text-slate-500 flex justify-between items-center pt-0.5">
-              <span>이벤트: ${plan.startDate || ''} ~ ${plan.eventEndDate || ''}</span>
-              <span>개통일: <strong class="text-slate-800 font-bold">${actDate}</strong></span>
-            </div>
-
-            <div class="text-xs font-bold text-slate-700 flex justify-between items-center pt-1 border-t border-slate-100">
-              <span class="truncate">${opt.name}</span>
-              <span class="shrink-0 text-orange-600 font-extrabold ml-2">월 ${window.fmt(opt.price)}원</span>
-            </div>
-
-            ${adminStatusButtonsHtml}
           </div>
         `;
-        container.innerHTML += cardHtml;
-      });
+      }
+
+      const carrierBadgeStyle = window.getCarrierBadgeStyle(plan.carrier);
+
+      return `
+        <div onclick="showDetailScreen('${plan.id}')" class="${cardOpacityClass} rounded-2xl border p-4 shadow-ssal transition cursor-pointer space-y-3">
+          
+          <div class="flex items-start gap-2.5">
+            <span class="shrink-0 px-3 py-1 text-xs font-black rounded-lg shadow-sm ${carrierBadgeStyle}">${plan.carrier || '알뜰폰'}</span>
+            
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base font-black text-slate-900 leading-snug">${plan.title || '제목 없음'}</h3>
+                ${statusBadgeHtml}
+              </div>
+            </div>
+          </div>
+
+          <!-- 이벤트 기간 눈에 띄는 뱃지 박스 -->
+          <div class="flex items-center justify-between bg-amber-50/90 border border-amber-200 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-800">
+            <span class="flex items-center gap-1.5 text-amber-900 text-[11px]">
+              <i class="fa-solid fa-calendar-days text-orange-600"></i> 이벤트 기간
+            </span>
+            <span class="text-orange-700 font-extrabold text-xs">
+              ${plan.startDate || ''} ~ ${plan.eventEndDate || ''}
+            </span>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-1">
+            <div class="text-lg font-black text-emerald-600 flex items-baseline gap-1">
+              <span>최대 ${maxNetSoFar >= 0 ? '+' : ''}${window.fmt(maxNetSoFar)}원</span>
+            </div>
+            <div class="text-xs text-emerald-700 font-bold">
+              ${bestMonthLabel}까지 유지 시 최대 (${bestMonth}개월) · 월 평균 ${netAvg >= 0 ? '+' : ''}${window.fmt(netAvg)}원
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-500 flex justify-between items-center pt-0.5">
+            <span>개통일 기준: <strong class="text-slate-800 font-bold">${actDate}</strong></span>
+            <span class="text-[11px] text-slate-400">자세히 보기 <i class="fa-solid fa-chevron-right text-[10px]"></i></span>
+          </div>
+
+          <div class="text-xs font-bold text-slate-700 flex justify-between items-center pt-1 border-t border-slate-100">
+            <span class="truncate">${opt.name}</span>
+            <span class="shrink-0 text-orange-600 font-extrabold ml-2">월 ${window.fmt(opt.price)}원</span>
+          </div>
+
+          ${adminStatusButtonsHtml}
+        </div>
+      `;
     }
 
     window.showDetailScreen = function(planId) {
