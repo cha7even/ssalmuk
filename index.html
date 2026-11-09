@@ -649,22 +649,39 @@
       try {
         const querySnapshot = await getDocs(plansCollection);
         const loadedPlans = [];
-        querySnapshot.forEach((docSnap) => loadedPlans.push(docSnap.data()));
-
-        loadedPlans.sort((a, b) => {
-          const dateA = a.eventEndDate || a.startDate || "";
-          const dateB = b.eventEndDate || b.startDate || "";
-          return dateB.localeCompare(dateA);
+        querySnapshot.forEach((docSnap) => {
+          if (docSnap.exists()) {
+            loadedPlans.push(docSnap.data());
+          }
         });
-        window.plansData = loadedPlans;
+
+        if (loadedPlans.length > 0) {
+          loadedPlans.sort((a, b) => {
+            const dateA = a.eventEndDate || a.startDate || "";
+            const dateB = b.eventEndDate || b.startDate || "";
+            return dateB.localeCompare(dateA);
+          });
+          window.plansData = loadedPlans;
+          // 성공적으로 가져왔으면 LocalStorage도 최신화
+          saveToLocalStorage();
+        } else {
+          // Firebase가 비어있는 경우에만 LocalStorage 참조
+          loadFromLocalStorage();
+        }
 
         const linesSnapshot = await getDocs(linesCollection);
         const loadedLines = [];
-        linesSnapshot.forEach((docSnap) => loadedLines.push(docSnap.data()));
-        window.linesData = loadedLines;
+        linesSnapshot.forEach((docSnap) => {
+          if (docSnap.exists()) {
+            loadedLines.push(docSnap.data());
+          }
+        });
+        if (loadedLines.length > 0) {
+          window.linesData = loadedLines;
+        }
 
       } catch (e) {
-        console.warn("Firebase 권한 제한으로 LocalStorage 모드로 안전 전환합니다.");
+        console.warn("Firebase 권한 제한 또는 네트워크 오류로 LocalStorage 모드로 안전 전환합니다:", e);
         window.isUseLocalStorage = true;
         loadFromLocalStorage();
       }
