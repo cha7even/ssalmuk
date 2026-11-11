@@ -373,7 +373,7 @@
           </div>
 
           <div class="flex justify-between items-center text-slate-500 border-t border-slate-100 pt-2">
-            <span>추천인 코드</span>
+            <span>프로모션 코드</span>
             <span id="calcRefCode" class="font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">-</span>
           </div>
         </div>
@@ -413,17 +413,25 @@
         <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
           <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">통신사</label>
-              <input type="text" id="formCarrier" required placeholder="예: KT M모바일, 헬로모바일" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none">
+              <label class="block font-bold text-slate-700 mb-1">통신사 선택</label>
+              <select id="formCarrierSelect" onchange="onCarrierSelectChange(this.value)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 focus:border-orange-500 focus:outline-none mb-1.5">
+                <option value="헬로모바일">헬로모바일</option>
+                <option value="U+모바일">U+모바일</option>
+                <option value="KTM모바일">KTM모바일</option>
+                <option value="우리WON모바일">우리WON모바일</option>
+                <option value="SK 7모바일">SK 7모바일</option>
+                <option value="custom">+ 직접 입력</option>
+              </select>
+              <input type="text" id="formCarrierCustom" placeholder="통신사 직접 입력" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl hidden focus:border-orange-500 focus:outline-none">
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-1">추천인 코드</label>
+              <label class="block font-bold text-slate-700 mb-1">프로모션 코드</label>
               <input type="text" id="formCode" placeholder="예: M, 셀프개통" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none">
             </div>
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">이벤트 제목</label>
+            <label class="block font-bold text-slate-700 mb-1">이벤트 내용</label>
             <input type="text" id="formTitle" required placeholder="예: [갤럭시자급제] 매월 3만원x8개월..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none">
           </div>
 
@@ -635,41 +643,31 @@
       const badgeEl = document.getElementById("visitorCountBadge");
       const numEl = document.getElementById("visitorCountNum");
 
+      // 로컬 방문자 수 불러오기
+      let savedLocalVal = localStorage.getItem("ssalmuk_local_visitors");
+      let localCount = parseInt(savedLocalVal || "1", 10);
+      if (isNaN(localCount) || localCount <= 0) localCount = 1;
+
+      // 방문 카운트 증가 처리 (세션당 1회)
+      if (!sessionStorage.getItem("ssalmuk_visited_session")) {
+        sessionStorage.setItem("ssalmuk_visited_session", "true");
+        localCount += 1;
+        localStorage.setItem("ssalmuk_local_visitors", localCount);
+      }
+      currentCount = localCount;
+
       try {
         const statsDocRef = doc(db, "ssalmuk_stats", "visitor_count");
-        const hasVisited = sessionStorage.getItem("ssalmuk_visited");
-
-        if (!hasVisited) {
-          sessionStorage.setItem("ssalmuk_visited", "true");
-          const snap = await getDoc(statsDocRef);
-          if (snap.exists()) {
-            await updateDoc(statsDocRef, { count: increment(1) });
-            currentCount = (snap.data().count || 0) + 1;
-          } else {
-            currentCount = 1;
-            await setDoc(statsDocRef, { count: 1 });
-          }
+        const snap = await getDoc(statsDocRef);
+        if (snap.exists()) {
+          const dbVal = snap.data().count || 0;
+          if (dbVal > currentCount) currentCount = dbVal;
+          await updateDoc(statsDocRef, { count: increment(1) });
         } else {
-          const snap = await getDoc(statsDocRef);
-          if (snap.exists()) {
-            currentCount = snap.data().count || 1;
-          }
+          await setDoc(statsDocRef, { count: currentCount });
         }
-        localStorage.setItem("ssalmuk_local_visitors", currentCount);
       } catch (err) {
-        console.warn("방문자 카운터 Firestore 읽기 실패, 로컬 카운터로 대체합니다:", err);
-        
-        // 기존 128 임시 데이터가 있는 경우 1로 초기화
-        let savedVal = localStorage.getItem("ssalmuk_local_visitors");
-        let localCount = parseInt(savedVal || "1", 10);
-        if (localCount === 128) localCount = 1;
-
-        if (!sessionStorage.getItem("ssalmuk_visited")) {
-          sessionStorage.setItem("ssalmuk_visited", "true");
-          localCount += 1;
-          localStorage.setItem("ssalmuk_local_visitors", localCount);
-        }
-        currentCount = localCount;
+        console.warn("Firestore 방문자 연동 실패, 로컬 카운트 사용:", err);
       }
 
       if (badgeEl && numEl) {
@@ -679,21 +677,63 @@
       }
     }
 
+    // 통신사 선택 변경 처리
+    window.onCarrierSelectChange = function(val) {
+      const customInput = document.getElementById("formCarrierCustom");
+      if (val === 'custom') {
+        customInput.classList.remove("hidden");
+        customInput.focus();
+      } else {
+        customInput.classList.add("hidden");
+        customInput.value = "";
+      }
+    }
+
+    window.getCarrierValueFromForm = function() {
+      const selectVal = document.getElementById("formCarrierSelect").value;
+      if (selectVal === 'custom') {
+        return document.getElementById("formCarrierCustom").value.trim() || '알뜰폰';
+      }
+      return selectVal;
+    }
+
+    window.setCarrierValueToForm = function(carrierStr) {
+      const select = document.getElementById("formCarrierSelect");
+      const customInput = document.getElementById("formCarrierCustom");
+      const carrierOptions = ["헬로모바일", "U+모바일", "KTM모바일", "우리WON모바일", "SK 7모바일"];
+
+      if (carrierOptions.includes(carrierStr)) {
+        select.value = carrierStr;
+        customInput.classList.add("hidden");
+        customInput.value = "";
+      } else if (carrierStr) {
+        select.value = "custom";
+        customInput.classList.remove("hidden");
+        customInput.value = carrierStr;
+      } else {
+        select.value = "헬로모바일";
+        customInput.classList.add("hidden");
+        customInput.value = "";
+      }
+    }
+
     // 통신사별 브랜드 색상 스타일 맵핑 함수
     window.getCarrierBadgeStyle = function(carrierName) {
       if (!carrierName) return 'bg-slate-800 text-white shadow-slate-800/20';
       const c = carrierName.trim();
 
-      if (c.includes('KT') || c.includes('케이티')) {
+      if (c.includes('KTM') || c.includes('KT M') || c.includes('케이티')) {
         return 'bg-rose-600 text-white shadow-rose-600/20';
-      } else if (c.includes('SKT') || c.includes('SK') || c.includes('에스케이')) {
+      } else if (c.includes('SK 7') || c.includes('SK7') || c.includes('세븐')) {
+        return 'bg-amber-500 text-white shadow-amber-500/20';
+      } else if (c.includes('SKT') || c.includes('SK')) {
         return 'bg-red-500 text-white shadow-red-500/20';
-      } else if (c.includes('LGU') || c.includes('유플러스') || c.includes('LG')) {
+      } else if (c.includes('U+') || c.includes('유플러스')) {
         return 'bg-pink-600 text-white shadow-pink-600/20';
       } else if (c.includes('헬로')) {
         return 'bg-purple-600 text-white shadow-purple-600/20';
-      } else if (c.includes('세븐') || c.includes('7Mobile')) {
-        return 'bg-amber-500 text-white shadow-amber-500/20';
+      } else if (c.includes('우리WON') || c.includes('우리')) {
+        return 'bg-blue-600 text-white shadow-blue-600/20';
       } else if (c.includes('아이즈')) {
         return 'bg-sky-500 text-white shadow-sky-500/20';
       } else if (c.includes('프리티')) {
@@ -754,6 +794,10 @@
     }
 
     async function loadStorage() {
+      // 1. LocalStorage 우선 로드 (유실 방지)
+      loadFromLocalStorage();
+
+      // 2. Firebase 데이터 병합 및 최신화
       try {
         const querySnapshot = await getDocs(plansCollection);
         const loadedPlans = [];
@@ -764,17 +808,18 @@
         });
 
         if (loadedPlans.length > 0) {
-          loadedPlans.sort((a, b) => {
+          // 로컬 데이터와 고유 ID 기준 합치기 (새로 등록한 요금제 보존)
+          const planMap = new Map();
+          window.plansData.forEach(p => planMap.set(p.id, p));
+          loadedPlans.forEach(p => planMap.set(p.id, p));
+          
+          window.plansData = Array.from(planMap.values());
+          window.plansData.sort((a, b) => {
             const dateA = a.eventEndDate || a.startDate || "";
             const dateB = b.eventEndDate || b.startDate || "";
             return dateB.localeCompare(dateA);
           });
-          window.plansData = loadedPlans;
-          // 성공적으로 가져왔으면 LocalStorage도 최신화
           saveToLocalStorage();
-        } else {
-          // Firebase가 비어있는 경우에만 LocalStorage 참조
-          loadFromLocalStorage();
         }
 
         const linesSnapshot = await getDocs(linesCollection);
@@ -785,13 +830,16 @@
           }
         });
         if (loadedLines.length > 0) {
-          window.linesData = loadedLines;
+          const lineMap = new Map();
+          window.linesData.forEach(l => lineMap.set(l.id, l));
+          loadedLines.forEach(l => lineMap.set(l.id, l));
+          window.linesData = Array.from(lineMap.values());
+          saveToLocalStorage();
         }
 
       } catch (e) {
-        console.warn("Firebase 권한 제한 또는 네트워크 오류로 LocalStorage 모드로 안전 전환합니다:", e);
+        console.warn("Firebase 권한 제한 또는 네트워크 오류로 LocalStorage 모드로 안전 작동합니다:", e);
         window.isUseLocalStorage = true;
-        loadFromLocalStorage();
       }
       
       renderMainList();
@@ -1769,7 +1817,7 @@
       if (editId) {
         const plan = window.plansData.find(p => p.id === editId);
         document.getElementById("modalHeaderTitle").innerText = "요금제 수정";
-        document.getElementById("formCarrier").value = plan.carrier || "";
+        window.setCarrierValueToForm(plan.carrier || "");
         document.getElementById("formCode").value = plan.code || "";
         document.getElementById("formTitle").value = plan.title || "";
         document.getElementById("formStartDate").value = plan.startDate || "";
@@ -1786,6 +1834,7 @@
         });
       } else {
         document.getElementById("modalHeaderTitle").innerText = "새 요금제 추가";
+        window.setCarrierValueToForm("헬로모바일");
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById("formStartDate").value = today;
         document.getElementById("formEndDate").value = today;
@@ -1885,7 +1934,7 @@
 
       const planData = {
         id: editId || ("plan-" + Date.now()),
-        carrier: document.getElementById("formCarrier").value.trim(),
+        carrier: window.getCarrierValueFromForm(),
         code: document.getElementById("formCode").value.trim(),
         title: document.getElementById("formTitle").value.trim(),
         startDate: document.getElementById("formStartDate").value || new Date().toISOString().slice(0, 10),
