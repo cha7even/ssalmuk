@@ -526,9 +526,14 @@
               <input type="text" id="lineCarrier" required placeholder="통신사명" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-semibold">
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-1">월 청구 요금 (자동연동)</label>
-              <input type="number" id="lineMonthlyFee" required placeholder="0" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-orange-600">
+              <label class="block font-bold text-slate-700 mb-1">요금제 이름 (자동연동)</label>
+              <input type="text" id="linePlanName" placeholder="예: LTE안심(5GB+)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-semibold text-slate-800">
             </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">월 청구 요금 (자동연동)</label>
+            <input type="number" id="lineMonthlyFee" required placeholder="0" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-orange-600">
           </div>
 
           <div class="grid grid-cols-2 gap-2.5 bg-white p-3.5 rounded-2xl border border-slate-200">
@@ -643,12 +648,12 @@
       const badgeEl = document.getElementById("visitorCountBadge");
       const numEl = document.getElementById("visitorCountNum");
 
-      // 로컬 방문자 수 불러오기
+      // 1. 로컬 방문자 수 가져오기 및 증가 처리
       let savedLocalVal = localStorage.getItem("ssalmuk_local_visitors");
       let localCount = parseInt(savedLocalVal || "1", 10);
       if (isNaN(localCount) || localCount <= 0) localCount = 1;
 
-      // 방문 카운트 증가 처리 (세션당 1회)
+      // 세션당 1회 방문 카운트 증가
       if (!sessionStorage.getItem("ssalmuk_visited_session")) {
         sessionStorage.setItem("ssalmuk_visited_session", "true");
         localCount += 1;
@@ -656,18 +661,22 @@
       }
       currentCount = localCount;
 
+      // 2. Firebase Firestore 동기화 시도
       try {
         const statsDocRef = doc(db, "ssalmuk_stats", "visitor_count");
         const snap = await getDoc(statsDocRef);
         if (snap.exists()) {
           const dbVal = snap.data().count || 0;
-          if (dbVal > currentCount) currentCount = dbVal;
+          if (dbVal >= currentCount) {
+            currentCount = dbVal + 1;
+            localStorage.setItem("ssalmuk_local_visitors", currentCount);
+          }
           await updateDoc(statsDocRef, { count: increment(1) });
         } else {
           await setDoc(statsDocRef, { count: currentCount });
         }
       } catch (err) {
-        console.warn("Firestore 방문자 연동 실패, 로컬 카운트 사용:", err);
+        console.warn("Firestore 방문자 연동 실패, 로컬 카운터로 작동:", err);
       }
 
       if (badgeEl && numEl) {
@@ -777,8 +786,14 @@
       try {
         const storedPlans = localStorage.getItem('ssalmuk_plans');
         const storedLines = localStorage.getItem('ssalmuk_lines');
-        if (storedPlans) window.plansData = JSON.parse(storedPlans);
-        if (storedLines) window.linesData = JSON.parse(storedLines);
+        if (storedPlans) {
+          const parsedP = JSON.parse(storedPlans);
+          if (Array.isArray(parsedP) && parsedP.length > 0) window.plansData = parsedP;
+        }
+        if (storedLines) {
+          const parsedL = JSON.parse(storedLines);
+          if (Array.isArray(parsedL) && parsedL.length > 0) window.linesData = parsedL;
+        }
       } catch(err) {
         console.warn("LocalStorage 로드 실패:", err);
       }
@@ -786,8 +801,12 @@
 
     function saveToLocalStorage() {
       try {
-        localStorage.setItem('ssalmuk_plans', JSON.stringify(window.plansData));
-        localStorage.setItem('ssalmuk_lines', JSON.stringify(window.linesData));
+        if (Array.isArray(window.plansData)) {
+          localStorage.setItem('ssalmuk_plans', JSON.stringify(window.plansData));
+        }
+        if (Array.isArray(window.linesData)) {
+          localStorage.setItem('ssalmuk_lines', JSON.stringify(window.linesData));
+        }
       } catch(err) {
         console.warn("LocalStorage 저장 실패:", err);
       }
@@ -797,7 +816,7 @@
       // 1. LocalStorage 우선 로드 (유실 방지)
       loadFromLocalStorage();
 
-      // 2. Firebase 데이터 병합 및 최신화
+      // 2. Firebase 데이터 병합 및 최신화 (기존 데이터 덮어쓰기 방지)
       try {
         const querySnapshot = await getDocs(plansCollection);
         const loadedPlans = [];
@@ -808,10 +827,9 @@
         });
 
         if (loadedPlans.length > 0) {
-          // 로컬 데이터와 고유 ID 기준 합치기 (새로 등록한 요금제 보존)
           const planMap = new Map();
-          window.plansData.forEach(p => planMap.set(p.id, p));
-          loadedPlans.forEach(p => planMap.set(p.id, p));
+          window.plansData.forEach(p => { if (p && p.id) planMap.set(p.id, p); });
+          loadedPlans.forEach(p => { if (p && p.id) planMap.set(p.id, p); });
           
           window.plansData = Array.from(planMap.values());
           window.plansData.sort((a, b) => {
@@ -831,8 +849,8 @@
         });
         if (loadedLines.length > 0) {
           const lineMap = new Map();
-          window.linesData.forEach(l => lineMap.set(l.id, l));
-          loadedLines.forEach(l => lineMap.set(l.id, l));
+          window.linesData.forEach(l => { if (l && l.id) lineMap.set(l.id, l); });
+          loadedLines.forEach(l => { if (l && l.id) lineMap.set(l.id, l); });
           window.linesData = Array.from(lineMap.values());
           saveToLocalStorage();
         }
@@ -910,16 +928,181 @@
       const plan = window.plansData.find(p => p.id === planId);
       if (!plan) return;
 
-      const opt = (plan.options && plan.options[0]) ? plan.options[0] : { price: 0 };
+      const opt = (plan.options && plan.options[0]) ? plan.options[0] : { name: '기본 요금제', price: 0 };
       const giftSummary = (plan.gifts || []).map(g => `${g.name} (${window.fmt(g.val)}원 / M+${g.month - 1}월)`).join('\n');
 
       window.openLineModal(null, {
         carrier: plan.carrier || '',
+        planName: opt.name || plan.title || '',
         monthlyFee: opt.price || 0,
         giftsSummary: giftSummary,
         rawGifts: plan.gifts || [],
         activationDate: plan.activationDate || new Date().toISOString().slice(0, 10)
       });
+    }
+
+    window.openLineModal = function(editId = null, defaultData = null) {
+      if (!window.isAdminMode) return;
+      document.getElementById("lineForm").reset();
+      document.getElementById("lineEditId").value = editId || "";
+
+      if (editId) {
+        const line = window.linesData.find(l => l.id === editId);
+        document.getElementById("lineModalHeaderTitle").innerText = "회선 수정";
+        document.getElementById("lineAlias").value = line.alias || "";
+        document.getElementById("lineCarrier").value = line.carrier || "";
+        document.getElementById("linePlanName").value = line.planName || "";
+        document.getElementById("lineMonthlyFee").value = line.monthlyFee || 0;
+        document.getElementById("lineActivationDate").value = line.activationDate || "";
+        document.getElementById("lineTargetDate").value = line.targetDate || "";
+        document.getElementById("lineGiftsSummary").value = line.giftsSummary || "";
+        document.getElementById("lineMemo").value = line.memo || "";
+      } else if (defaultData) {
+        document.getElementById("lineModalHeaderTitle").innerText = "회선 추가 (요금제 연동)";
+        document.getElementById("lineCarrier").value = defaultData.carrier || "";
+        document.getElementById("linePlanName").value = defaultData.planName || "";
+        document.getElementById("lineMonthlyFee").value = defaultData.monthlyFee || 0;
+        document.getElementById("lineGiftsSummary").value = defaultData.giftsSummary || "";
+        document.getElementById("lineActivationDate").value = defaultData.activationDate || new Date().toISOString().slice(0, 10);
+        
+        const d = new Date(document.getElementById("lineActivationDate").value);
+        d.setMonth(d.getMonth() + 6);
+        document.getElementById("lineTargetDate").value = d.toISOString().slice(0, 10);
+        window.tempRawGifts = defaultData.rawGifts || [];
+      } else {
+        document.getElementById("lineModalHeaderTitle").innerText = "신규 회선 추가";
+        const today = new Date().toISOString().slice(0, 10);
+        document.getElementById("lineActivationDate").value = today;
+        const d = new Date();
+        d.setMonth(d.getMonth() + 6);
+        document.getElementById("lineTargetDate").value = d.toISOString().slice(0, 10);
+        window.tempRawGifts = [];
+      }
+
+      document.getElementById("lineModal").classList.remove("hidden");
+    }
+
+    window.closeLineModal = function() {
+      document.getElementById("lineModal").classList.add("hidden");
+    }
+
+    window.saveLineForm = async function(e) {
+      e.preventDefault();
+      if (!window.isAdminMode) return;
+
+      const editId = document.getElementById("lineEditId").value;
+      const existingLine = editId ? window.linesData.find(l => l.id === editId) : null;
+
+      const lineData = {
+        id: editId || ("line-" + Date.now()),
+        alias: document.getElementById("lineAlias").value.trim(),
+        carrier: document.getElementById("lineCarrier").value.trim(),
+        planName: document.getElementById("linePlanName").value.trim(),
+        monthlyFee: parseInt(document.getElementById("lineMonthlyFee").value, 10) || 0,
+        activationDate: document.getElementById("lineActivationDate").value,
+        targetDate: document.getElementById("lineTargetDate").value,
+        giftsSummary: document.getElementById("lineGiftsSummary").value.trim(),
+        rawGifts: window.tempRawGifts || (existingLine ? existingLine.rawGifts : []),
+        memo: document.getElementById("lineMemo").value.trim(),
+      };
+
+      if (editId) {
+        const idx = window.linesData.findIndex(l => l.id === editId);
+        if (idx >= 0) window.linesData[idx] = lineData;
+      } else {
+        window.linesData.unshift(lineData);
+      }
+
+      window.tempRawGifts = null;
+
+      await window.saveLinesStorage();
+      window.closeLineModal();
+      window.switchMainTab('lines');
+    }
+
+    window.deleteLine = async function(id) {
+      if (!window.isAdminMode) return;
+      if (confirm("이 회선을 삭제하시겠습니까?")) {
+        window.linesData = window.linesData.filter(l => l.id !== id);
+        try {
+          if (!window.isUseLocalStorage) await deleteDoc(doc(db, "ssalmuk_lines", id));
+          saveToLocalStorage();
+        } catch(e) {
+          console.error("회선 삭제 실패:", e);
+        }
+        renderLinesList();
+      }
+    }
+
+    window.getLineStatusInfo = function(targetDateStr, activationDateStr) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      let elapsedText = '';
+      if (activationDateStr) {
+        const act = new Date(activationDateStr + "T00:00:00");
+        if (!isNaN(act.getTime())) {
+          const elapsedDays = Math.floor((today.getTime() - act.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          elapsedText = elapsedDays >= 1 ? `개통 +${elapsedDays}일` : `개통 D${elapsedDays - 1}`;
+        }
+      }
+
+      if (!targetDateStr) {
+        return { text: elapsedText || '일정 미지정', class: 'bg-slate-100 text-slate-700 font-bold', code: 'none' };
+      }
+
+      const target = new Date(targetDateStr + "T00:00:00");
+      const diffTime = target.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 7) {
+        const prefix = elapsedText ? `${elapsedText} · ` : '';
+        return { text: `${prefix}탈출 D-${diffDays}`, class: 'bg-emerald-100 text-emerald-800 font-bold', code: 'safe' };
+      } else if (diffDays > 0) {
+        const prefix = elapsedText ? `${elapsedText} · ` : '';
+        return { text: `${prefix}탈출 임박 (D-${diffDays})`, class: 'bg-amber-100 text-amber-800 font-bold', code: 'urgent' };
+      } else if (diffDays === 0) {
+        return { text: `${elapsedText ? elapsedText + ' · ' : ''}D-DAY 오늘 탈출가능!`, class: 'bg-rose-600 text-white font-black animate-pulse', code: 'ready' };
+      } else {
+        return { text: `${elapsedText ? elapsedText + ' · ' : ''}탈출 가능 (+${Math.abs(diffDays)}일 경과)`, class: 'bg-rose-100 text-rose-700 font-bold', code: 'ready' };
+      }
+    }
+
+    window.getLineMonthlyGiftSchedule = function(line) {
+      if (!line || !line.activationDate || !line.targetDate) return [];
+      const actD = new Date(line.activationDate + "T00:00:00");
+      const targetD = new Date(line.targetDate + "T00:00:00");
+      if (isNaN(actD.getTime()) || isNaN(targetD.getTime())) return [];
+
+      const totalMonths = Math.max(1, (targetD.getFullYear() - actD.getFullYear()) * 12 + (targetD.getMonth() - actD.getMonth()) + 1);
+      const schedule = [];
+
+      for (let m = 1; m <= totalMonths; m++) {
+        const curD = new Date(actD.getFullYear(), actD.getMonth() + (m - 1), 1);
+        const ymLabel = `${curD.getFullYear()}.${String(curD.getMonth() + 1).padStart(2, '0')}월`;
+        let monthSum = 0;
+        const items = [];
+
+        if (line.rawGifts && Array.isArray(line.rawGifts) && line.rawGifts.length > 0) {
+          line.rawGifts.forEach(g => {
+            const startM = g.month || 1;
+            const endM = g.endMonth || (g.isMonthly ? 12 : startM);
+            const matched = g.isMonthly ? (m >= startM && m <= endM) : (m === startM);
+            if (matched) {
+              monthSum += (g.val || 0);
+              items.push(`${g.name} (+${window.fmt(g.val)}원)`);
+            }
+          });
+        }
+
+        schedule.push({
+          mIndex: m,
+          ymLabel,
+          totalVal: monthSum,
+          items
+        });
+      }
+      return schedule;
     }
 
     window.openLineModal = function(editId = null, defaultData = null) {
@@ -1105,7 +1288,7 @@
         const lineMonthGift = window.calculateLineGiftValForCurrentMonth(line);
         totalGiftValForCurrentMonth += lineMonthGift;
 
-        const st = window.getLineStatusInfo(line.targetDate);
+        const st = window.getLineStatusInfo(line.targetDate, line.activationDate);
         if (st.code === 'ready') readyLines++;
         else if (st.code === 'urgent') urgentLines++;
         else if (st.code === 'safe') safeLines++;
@@ -1142,20 +1325,59 @@
       }
 
       window.linesData.forEach(line => {
-        const statusInfo = window.getLineStatusInfo(line.targetDate);
+        const statusInfo = window.getLineStatusInfo(line.targetDate, line.activationDate);
         const thisMonthGift = window.calculateLineGiftValForCurrentMonth(line);
         const carrierBadgeStyle = window.getCarrierBadgeStyle(line.carrier);
+        const monthlySchedule = window.getLineMonthlyGiftSchedule(line);
+
+        let scheduleHtml = '';
+        if (monthlySchedule.length > 0) {
+          const giftMonthsOnly = monthlySchedule.filter(s => s.totalVal > 0);
+          const totalExpectedGift = monthlySchedule.reduce((acc, cur) => acc + cur.totalVal, 0);
+
+          scheduleHtml = `
+            <div class="text-[11px] bg-emerald-50/80 p-3 rounded-xl border border-emerald-200 space-y-2">
+              <div class="flex items-center justify-between border-b border-emerald-200/70 pb-1.5">
+                <strong class="text-emerald-900 text-[11px] font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-calendar-check text-emerald-600"></i> 탈출월까지 월별 사은품 수령표
+                </strong>
+                <span class="text-emerald-700 font-black text-[11px]">총 +${window.fmt(totalExpectedGift)}원</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                ${monthlySchedule.map(s => `
+                  <div class="p-1.5 rounded-lg border ${s.totalVal > 0 ? 'bg-white border-emerald-300 shadow-2xs' : 'bg-slate-50/70 border-slate-200/70 opacity-60'}">
+                    <div class="flex justify-between items-center text-[10px] font-bold ${s.totalVal > 0 ? 'text-slate-800' : 'text-slate-400'}">
+                      <span>${s.ymLabel} (${s.mIndex}M)</span>
+                    </div>
+                    <div class="font-black text-[11px] mt-0.5 ${s.totalVal > 0 ? 'text-emerald-600' : 'text-slate-400'}">
+                      ${s.totalVal > 0 ? '+' + window.fmt(s.totalVal) + '원' : '0원'}
+                    </div>
+                    ${s.items.length > 0 ? `<div class="text-[9px] text-slate-500 truncate mt-0.5" title="${s.items.join(', ')}">${s.items.join(', ')}</div>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        } else if (line.giftsSummary) {
+          scheduleHtml = `
+            <div class="text-[11px] text-slate-600 bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
+              <strong class="text-emerald-900 block text-[10px] mb-0.5 font-bold"><i class="fa-solid fa-gift mr-1"></i>전체 사은품 내역</strong>
+              <pre class="whitespace-pre-wrap font-sans text-[11px]">${line.giftsSummary}</pre>
+            </div>
+          `;
+        }
 
         container.innerHTML += `
           <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:border-slate-300 transition space-y-3">
             <div class="flex items-start justify-between gap-2">
-              <div class="flex items-center gap-2">
+              <div class="flex items-start gap-2 min-w-0">
                 <span class="shrink-0 px-2.5 py-1 text-xs font-black rounded-lg shadow-sm ${carrierBadgeStyle}">${line.carrier || '알뜰폰'}</span>
-                <div>
-                  <h3 class="text-base font-black text-slate-900">${line.alias}</h3>
+                <div class="min-w-0">
+                  <h3 class="text-base font-black text-slate-900 truncate">${line.alias}</h3>
+                  ${line.planName ? `<div class="text-xs font-bold text-orange-600 mt-0.5 truncate"><i class="fa-solid fa-sim-card mr-1 text-[10px]"></i>${line.planName}</div>` : ''}
                 </div>
               </div>
-              <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md ${statusInfo.class}">${statusInfo.text}</span>
+              <span class="shrink-0 px-2.5 py-1 text-[10px] rounded-lg ${statusInfo.class}">${statusInfo.text}</span>
             </div>
 
             <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/80">
@@ -1173,12 +1395,7 @@
               </div>
             </div>
 
-            ${line.giftsSummary ? `
-              <div class="text-[11px] text-slate-600 bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
-                <strong class="text-emerald-900 block text-[10px] mb-0.5 font-bold"><i class="fa-solid fa-gift mr-1"></i>전체 사은품 내역</strong>
-                <pre class="whitespace-pre-wrap font-sans text-[11px]">${line.giftsSummary}</pre>
-              </div>
-            ` : ''}
+            ${scheduleHtml}
 
             ${line.memo ? `
               <div class="text-[11px] text-slate-600 bg-amber-50/70 p-2.5 rounded-xl border border-amber-200">
