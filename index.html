@@ -74,12 +74,15 @@
   <div id="appContainer" class="w-full max-w-full sm:max-w-md md:max-w-xl min-h-screen bg-[#F8FAFC] border-x border-ssal-border flex flex-col relative shadow-xl box-border">
 
     <!-- Admin Nav Tabs (관리자 모드일 때만 표시) -->
-    <div id="adminTabNav" class="hidden w-full bg-slate-900 border-b border-slate-800 p-2.5 flex justify-center gap-2 text-xs font-bold shrink-0 shadow-md">
-      <button id="navTabPlans" onclick="switchMainTab('plans')" class="px-4 py-2 rounded-xl bg-orange-600 text-white shadow-md transition flex items-center gap-1.5">
+    <div id="adminTabNav" class="hidden w-full bg-slate-900 border-b border-slate-800 p-2 flex justify-center gap-1.5 text-xs font-bold shrink-0 shadow-md">
+      <button id="navTabPlans" onclick="switchMainTab('plans')" class="px-3.5 py-2 rounded-xl bg-orange-600 text-white shadow-md transition flex items-center gap-1.5">
         <i class="fa-solid fa-list-check"></i>요금제 계산기
       </button>
-      <button id="navTabLines" onclick="switchMainTab('lines')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5">
+      <button id="navTabLines" onclick="switchMainTab('lines')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5">
         <i class="fa-solid fa-sim-card"></i>회선 관리자
+      </button>
+      <button id="navTabPresets" onclick="switchMainTab('presets')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-bookmark"></i>요금제 항목
       </button>
     </div>
 
@@ -248,6 +251,27 @@
       <div id="linesList" class="space-y-3"></div>
     </div>
 
+    <!-- ==================== PLAN PRESETS MANAGER SCREEN (요금제 항목 관리) ==================== -->
+    <div id="presetManagerScreen" class="w-full flex-1 p-3.5 sm:p-5 space-y-4 box-border hidden">
+      <div class="flex items-center justify-between pt-2 border-b border-slate-200 pb-3">
+        <div>
+          <h2 class="text-lg font-black text-slate-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-bookmark text-orange-600"></i> 요금제 항목 관리
+          </h2>
+          <p class="text-[11px] text-slate-500 font-medium">자주 쓰는 요금제 이름과 월 요금을 등록해 두고 모달에서 바로 불러옵니다.</p>
+        </div>
+        <button onclick="openPresetModal()" class="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl shadow-md shadow-orange-600/20 transition flex items-center gap-1 shrink-0">
+          <i class="fa-solid fa-plus"></i> 항목 추가
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between text-xs">
+        <span id="totalPresetsCount" class="font-bold text-slate-500">총 0개 요금제 항목 등록됨</span>
+      </div>
+
+      <div id="presetsList" class="space-y-2.5"></div>
+    </div>
+
     <!-- ==================== PLAN DETAIL SCREEN ==================== -->
     <div id="detailScreen" class="w-full flex-1 p-4 space-y-4 hidden">
       <div class="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -306,74 +330,59 @@
 
         <div id="maxProfitTableBox" class="bg-gradient-to-br from-emerald-50/80 to-white rounded-2xl border border-emerald-200 p-4 text-xs space-y-3 shadow-sm">
           <div class="flex items-center justify-between border-b border-emerald-200/80 pb-2.5">
-            <div>
-              <span class="text-[11px] font-bold text-emerald-800 block"><span id="maxProfitMonthLabel">-</span>까지 유지 시 (<span id="maxProfitMonthNum">0</span>개월)</span>
-              <span class="text-[10px] text-slate-500">최대 누적 순이익 구간</span>
-            </div>
-            <strong id="maxProfitTotalText" class="text-lg font-black text-emerald-600">+0원</strong>
+            <span class="font-extrabold text-emerald-950 flex items-center gap-1.5">
+              <i class="fa-solid fa-trophy text-amber-500"></i>
+              <span><span id="maxProfitMonthLabel">-</span> (<span id="maxProfitMonthNum">-</span>개월) 유지 시 최대 혜택</span>
+            </span>
+            <strong id="maxProfitTotalText" class="text-sm sm:text-base font-black text-emerald-600">+0원</strong>
           </div>
 
-          <div class="overflow-x-auto custom-scrollbar pt-0.5">
-            <table id="maxProfitTable" class="w-full text-center text-[11px] border-collapse min-w-max">
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-2 pt-2">
-        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">사은품 목록 및 지급 구간</h3>
-        <p class="text-[11px] text-slate-500 leading-tight">
-          시작월 및 유지기간 설정이 적용된 사은품 지급 항목입니다.
-        </p>
-        <div id="detailGiftsList" class="space-y-2 text-xs"></div>
-      </div>
-
-      <div class="space-y-2 pt-2">
-        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">유의사항</h3>
-        <div class="bg-white rounded-2xl border border-slate-200 p-3.5 text-[11px] text-slate-600 space-y-1.5 leading-relaxed shadow-sm">
-          <ul id="detailNoticesList" class="list-disc list-inside space-y-1 text-slate-600"></ul>
-        </div>
-      </div>
-
-      <div class="space-y-2 pt-2">
-        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">요금제 스펙</h3>
-        <div id="detailPlanSpecBox" class="bg-white rounded-2xl border border-slate-200 p-3.5 text-xs space-y-2 shadow-sm">
-          <div class="flex justify-between">
-            <span class="text-slate-500 font-medium">요금제</span>
-            <span id="specPlanName" class="font-bold text-slate-900">-</span>
-          </div>
-          <div class="flex justify-between border-t border-slate-100 pt-2">
-            <span class="text-slate-500 font-medium">월 기본 요금 (할인)</span>
-            <span id="specPlanPrice" class="font-bold text-orange-600">0원 / 월</span>
+          <div class="overflow-x-auto custom-scrollbar rounded-xl border border-emerald-200/80 bg-white">
+            <table id="maxProfitTable" class="w-full text-center text-[11px] border-collapse"></table>
           </div>
         </div>
       </div>
 
-      <div class="space-y-2 pt-2">
-        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">유지 기간별 시뮬레이션</h3>
-        <select id="detailSubPlanSelect2" onchange="syncOptionSelect(this.value)" class="w-full bg-white border border-slate-300 text-slate-900 text-xs rounded-xl p-2.5 font-bold">
-        </select>
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 text-xs space-y-2.5 shadow-sm">
+        <div class="flex justify-between items-center text-slate-600">
+          <span>요금제명</span>
+          <strong id="specPlanName" class="text-slate-900 font-bold">-</strong>
+        </div>
+        <div class="flex justify-between items-center text-slate-600">
+          <span>월 기본요금</span>
+          <strong id="specPlanPrice" class="text-orange-600 font-black">0원 / 월</strong>
+        </div>
+      </div>
 
+      <div class="space-y-2 pt-1">
+        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">사은품 지급 혜택</h3>
+        <div id="detailGiftsList" class="space-y-2"></div>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">꼭 확인해야 할 유의사항</h3>
+        <ul id="detailNoticesList" class="bg-amber-50/70 rounded-2xl border border-amber-200 p-4 text-xs text-amber-950 space-y-1.5 list-disc list-inside font-medium"></ul>
+      </div>
+
+      <div class="space-y-3 pt-2">
+        <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">유지기간별 순이익 시뮬레이션</h3>
+        <select id="detailSubPlanSelect2" onchange="syncOptionSelect(this.value)" class="w-full bg-white border border-slate-300 text-slate-900 text-xs rounded-xl p-2.5 font-bold focus:outline-none focus:border-orange-500 shadow-sm"></select>
         <div id="monthTabsContainer" class="grid grid-cols-4 gap-1.5"></div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-2.5 text-xs shadow-sm">
-          <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-            <span class="font-bold text-slate-500">유지기간</span>
-            <span id="calcPeriodText" class="font-bold text-slate-900">10개월</span>
-          </div>
-
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 text-xs space-y-2.5 shadow-sm">
           <div class="flex justify-between items-center text-slate-500">
-            <span>총 청구금 <span class="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-semibold border border-amber-200">(1M 일할적용)</span></span>
-            <span id="calcTotalBill" class="font-bold text-slate-900">0원</span>
+            <span>선택 유지기간</span>
+            <strong id="calcPeriodText" class="text-slate-900 font-bold">-</strong>
           </div>
-
-          <div class="flex justify-between items-start text-slate-500">
-            <span>총 사은품 가치</span>
-            <div class="text-right">
-              <div id="calcTotalGiftsVal" class="font-bold text-orange-600">0원</div>
-              <div id="calcGiftsSummary" class="text-[10px] text-slate-400"></div>
-            </div>
+          <div class="flex justify-between items-center text-slate-500">
+            <span>총 예상 청구금</span>
+            <strong id="calcTotalBill" class="text-slate-900 font-bold">0원</strong>
           </div>
+          <div class="flex justify-between items-center text-slate-500">
+            <span>총 수령 사은품</span>
+            <strong id="calcTotalGiftsVal" class="text-orange-600 font-bold">0원</strong>
+          </div>
+          <div class="text-[11px] text-slate-400 text-right truncate" id="calcGiftsSummary">-</div>
 
           <div class="flex justify-between items-center pt-2 border-t border-slate-100">
             <span class="font-bold text-slate-900">총 순이익 (사은품 - 청구금)</span>
@@ -462,7 +471,12 @@
           </div>
 
           <div class="space-y-2">
-            <label class="block font-bold text-slate-900">요금제</label>
+            <div class="flex items-center justify-between gap-2">
+              <label class="block font-bold text-slate-900">요금제</label>
+              <select id="planPresetQuickSelect" onchange="applyPresetToPlanModal(this.value)" class="max-w-[220px] px-2.5 py-1 bg-orange-50 border border-orange-200 text-orange-800 rounded-lg text-[11px] font-bold focus:outline-none focus:border-orange-500">
+                <option value="">📥 요금제 항목에서 불러오기...</option>
+              </select>
+            </div>
             <div id="formOptionsContainer" class="space-y-2"></div>
           </div>
 
@@ -526,33 +540,36 @@
               <input type="text" id="lineCarrierCustom" placeholder="통신사명 직접 입력" class="hidden w-full mt-1.5 p-2 bg-orange-50/50 border border-orange-300 rounded-xl focus:border-orange-500 focus:outline-none font-bold text-slate-900">
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-1">요금제 이름 (자동연동 · 선택수정)</label>
-              <select id="linePlanNameSelect" onchange="onLinePlanNameSelectChange(this.value)" class="w-full p-2.5 bg-orange-50/40 border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none font-bold text-slate-900">
-                <option value="custom">+ 직접 입력</option>
-              </select>
-              <input type="text" id="linePlanName" placeholder="예: LTE안심(5GB+)" class="hidden w-full mt-1.5 p-2 bg-white border border-orange-300 rounded-xl font-bold text-slate-900 focus:border-orange-500 focus:outline-none">
+              <label class="block font-bold text-slate-700 mb-1">요금제 이름 (자동연동 · 직접입력)</label>
+              <input type="text" id="linePlanName" placeholder="예: LTE안심(5GB+)" class="w-full p-2.5 bg-orange-50/40 border border-slate-300 rounded-xl font-bold text-slate-900 focus:border-orange-500 focus:outline-none">
             </div>
           </div>
 
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">월 청구 요금 (자동연동)</label>
-            <input type="number" id="lineMonthlyFee" required placeholder="0" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-orange-600">
+          <div class="bg-orange-50/60 border border-orange-200/80 p-2.5 rounded-xl flex items-center justify-between gap-2">
+            <span class="text-[11px] font-bold text-orange-900 shrink-0"><i class="fa-solid fa-bookmark text-orange-600 mr-1"></i>요금제 항목 불러오기</span>
+            <select id="linePresetQuickSelect" onchange="applyPresetToLineModal(this.value)" class="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-orange-200 text-slate-800 rounded-lg text-[11px] font-bold focus:outline-none focus:border-orange-500">
+              <option value="">등록된 요금제 항목 선택...</option>
+            </select>
           </div>
 
-          <div class="grid grid-cols-2 gap-2.5 bg-white p-3.5 rounded-2xl border border-slate-200">
+          <div class="grid grid-cols-3 gap-2">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">개통 가입일 (선택)</label>
-              <input type="date" id="lineActivationDate" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800">
+              <label class="block font-bold text-slate-700 mb-1">월 청구요금 (원)</label>
+              <input type="number" id="lineMonthlyFee" required placeholder="0" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-orange-600 focus:border-orange-500 focus:outline-none">
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-1">탈출 예정일자 (선택)</label>
-              <input type="date" id="lineTargetDate" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-orange-600">
+              <label class="block font-bold text-slate-700 mb-1">개통 가입일</label>
+              <input type="date" id="lineActivationDate" required class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-semibold text-slate-800">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">탈출 예정일</label>
+              <input type="date" id="lineTargetDate" required class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-semibold text-slate-800">
             </div>
           </div>
 
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <label class="font-bold text-slate-800">🎁 사은품 목록 및 지급일 설정 (수정 가능)</label>
+              <label class="font-bold text-slate-900">사은품 목록 및 혜택 (매월 지급일 수정)</label>
               <button type="button" onclick="addLineGiftModalRow()" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-bold text-[11px] hover:bg-emerald-100 transition">+ 사은품 추가</button>
             </div>
             <div id="lineModalGiftsContainer" class="space-y-2"></div>
@@ -561,13 +578,55 @@
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">메모 / 특이사항</label>
-            <textarea id="lineMemo" rows="3" placeholder="예: M+3월 상품권 수령 예정, 유심 번호 등..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl resize-none"></textarea>
+            <textarea id="lineMemo" rows="2" placeholder="예: 유심비 지원 조건, 해지 방어 메모 등..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl resize-none text-xs"></textarea>
           </div>
-
         </div>
 
         <div class="p-4 bg-white border-t border-slate-200 flex justify-end gap-2 shrink-0">
           <button type="button" onclick="closeLineModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs border border-slate-200">취소</button>
+          <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-bold rounded-xl text-xs shadow-md shadow-orange-600/20 hover:bg-orange-700 transition">저장하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== ADD/EDIT PRESET MODAL (요금제 항목 추가/수정 모달) ==================== -->
+  <div id="presetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#F8FAFC] rounded-3xl max-w-md w-full flex flex-col shadow-2xl border border-slate-200 overflow-hidden my-auto">
+      <input type="hidden" id="presetEditId" value="">
+      
+      <div class="px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+        <h3 id="presetModalHeaderTitle" class="font-black text-sm text-slate-900">새 요금제 항목 추가</h3>
+        <button onclick="closePresetModal()" class="w-7 h-7 rounded-full hover:bg-slate-100 text-slate-500 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="presetForm" onsubmit="savePresetForm(event)" class="p-4 sm:p-5 space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">통신사 (선택)</label>
+          <select id="presetCarrierSelect" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none font-bold text-slate-800">
+            <option value="">전체 / 무관</option>
+            <option value="헬로모바일">헬로모바일</option>
+            <option value="U+모바일">U+모바일</option>
+            <option value="KTM모바일">KTM모바일</option>
+            <option value="우리WON모바일">우리WON모바일</option>
+            <option value="SK 7모바일">SK 7모바일</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">요금제 이름 <span class="text-rose-500">*</span></label>
+          <input type="text" id="presetName" required placeholder="예: LTE안심 5GB+1Mbps" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 focus:border-orange-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">기본 월 요금 (원)</label>
+          <input type="number" id="presetPrice" placeholder="0" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-orange-600 focus:border-orange-500 focus:outline-none">
+        </div>
+
+        <div class="pt-2 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onclick="closePresetModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs border border-slate-200">취소</button>
           <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-bold rounded-xl text-xs shadow-md shadow-orange-600/20 hover:bg-orange-700 transition">저장하기</button>
         </div>
       </form>
@@ -614,9 +673,11 @@
     const db = getFirestore(app);
     const plansCollection = collection(db, "ssalmuk_plans");
     const linesCollection = collection(db, "ssalmuk_lines");
+    const presetsCollection = collection(db, "ssalmuk_presets");
 
     window.plansData = [];
     window.linesData = [];
+    window.planPresetsData = [];
     window.currentPlanId = null;
     window.currentSelectedOptionIdx = 0;
     window.currentSelectedMonth = 10;
@@ -913,16 +974,179 @@
         }
       }
     };
+    // 회선 관리자 모달 요금제 이름 직접 입력 제어
+    window.setLinePlanNameValueToForm = function(planName) {
+      const inputs = document.querySelectorAll("#lineModal #linePlanName");
+      inputs.forEach(input => { input.value = (planName || "").trim(); });
+    };
 
     window.getLinePlanNameValueFromForm = function() {
-      const sel = document.getElementById("linePlanNameSelect");
-      const customInput = document.getElementById("linePlanName");
-      if (!sel) return customInput ? customInput.value.trim() : "";
-      if (sel.value === "custom") {
-        return customInput ? customInput.value.trim() : "";
-      }
-      return sel.value.trim();
+      const input = document.querySelector("#lineModal #linePlanName");
+      return input ? input.value.trim() : "";
     };
+
+    // ==================== 요금제 항목(Presets) 관리 함수 ====================
+    window.populatePresetQuickSelects = function() {
+      const selects = [
+        { id: "planPresetQuickSelect", placeholder: "📥 요금제 항목에서 불러오기..." },
+        { id: "linePresetQuickSelect", placeholder: "등록된 요금제 항목 선택..." }
+      ];
+      selects.forEach(cfg => {
+        const sel = document.getElementById(cfg.id);
+        if (!sel) return;
+        sel.innerHTML = `<option value="">${cfg.placeholder}</option>`;
+        (window.planPresetsData || []).forEach(preset => {
+          const carrierPrefix = preset.carrier ? `[${preset.carrier}] ` : "";
+          const priceSuffix = preset.price ? ` (${window.fmt(preset.price)}원)` : "";
+          const opt = document.createElement("option");
+          opt.value = preset.id;
+          opt.textContent = `${carrierPrefix}${preset.name}${priceSuffix}`;
+          sel.appendChild(opt);
+        });
+      });
+    };
+
+    window.applyPresetToPlanModal = function(presetId) {
+      if (!presetId) return;
+      const preset = (window.planPresetsData || []).find(p => p.id === presetId);
+      if (!preset) return;
+      if (preset.carrier) {
+        window.setCarrierValueToForm(preset.carrier);
+      }
+      window.addFormOptionRow(preset.name || "", preset.price || 0);
+      const sel = document.getElementById("planPresetQuickSelect");
+      if (sel) sel.value = "";
+    };
+
+    window.applyPresetToLineModal = function(presetId) {
+      if (!presetId) return;
+      const preset = (window.planPresetsData || []).find(p => p.id === presetId);
+      if (!preset) return;
+      if (preset.carrier) {
+        window.setLineCarrierValueToForm(preset.carrier);
+      }
+      window.setLinePlanNameValueToForm(preset.name || "");
+      const feeInput = document.getElementById("lineMonthlyFee");
+      if (feeInput && typeof preset.price === "number") {
+        feeInput.value = preset.price;
+      }
+      const sel = document.getElementById("linePresetQuickSelect");
+      if (sel) sel.value = "";
+    };
+
+    window.openPresetModal = function(editId = null) {
+      if (!window.isAdminMode) return;
+      const form = document.getElementById("presetForm");
+      if (form) form.reset();
+      document.getElementById("presetEditId").value = editId || "";
+
+      if (editId) {
+        const preset = (window.planPresetsData || []).find(p => p.id === editId);
+        if (preset) {
+          document.getElementById("presetModalHeaderTitle").innerText = "요금제 항목 수정";
+          document.getElementById("presetCarrierSelect").value = preset.carrier || "";
+          document.getElementById("presetName").value = preset.name || "";
+          document.getElementById("presetPrice").value = preset.price || 0;
+        }
+      } else {
+        document.getElementById("presetModalHeaderTitle").innerText = "새 요금제 항목 추가";
+        document.getElementById("presetCarrierSelect").value = "";
+        document.getElementById("presetName").value = "";
+        document.getElementById("presetPrice").value = "";
+      }
+      document.getElementById("presetModal").classList.remove("hidden");
+    };
+
+    window.closePresetModal = function() {
+      const modal = document.getElementById("presetModal");
+      if (modal) modal.classList.add("hidden");
+    };
+
+    window.savePresetForm = async function(e) {
+      e.preventDefault();
+      if (!window.isAdminMode) return;
+      const editId = document.getElementById("presetEditId").value;
+      const name = document.getElementById("presetName").value.trim();
+      if (!name) return;
+
+      const presetData = {
+        id: editId || ("preset-" + Date.now()),
+        carrier: document.getElementById("presetCarrierSelect").value || "",
+        name: name,
+        price: parseInt(document.getElementById("presetPrice").value, 10) || 0
+      };
+
+      if (editId) {
+        const idx = window.planPresetsData.findIndex(p => p.id === editId);
+        if (idx >= 0) window.planPresetsData[idx] = presetData;
+      } else {
+        window.planPresetsData.unshift(presetData);
+      }
+
+      await window.savePresetsStorage();
+      window.closePresetModal();
+      window.populatePresetQuickSelects();
+      renderPresetsList();
+    };
+
+    window.deletePreset = async function(id) {
+      if (!window.isAdminMode) return;
+      window.planPresetsData = window.planPresetsData.filter(p => p.id !== id);
+      try {
+        if (!window.isUseLocalStorage) await deleteDoc(doc(db, "ssalmuk_presets", id));
+        saveToLocalStorage();
+      } catch (e) {
+        console.warn("요금제 항목 삭제 동기화 실패:", e);
+      }
+      window.populatePresetQuickSelects();
+      renderPresetsList();
+    };
+
+    function renderPresetsList() {
+      if (!window.isAdminMode) return;
+      const container = document.getElementById("presetsList");
+      const countEl = document.getElementById("totalPresetsCount");
+      if (!container) return;
+
+      const list = window.planPresetsData || [];
+      if (countEl) countEl.innerText = `총 ${list.length}개 요금제 항목 등록됨`;
+      container.innerHTML = "";
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-xs space-y-2 shadow-sm">
+            <i class="fa-solid fa-bookmark text-3xl text-slate-300"></i>
+            <div class="font-bold text-slate-800">등록된 요금제 항목이 없습니다.</div>
+            <p class="text-[11px]">우측 상단 [항목 추가] 버튼을 눌러 자주 쓰는 요금제를 미리 등록해 두세요.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.forEach(preset => {
+        const badgeHtml = preset.carrier
+          ? `<span class="shrink-0 px-2.5 py-0.5 text-[11px] font-black rounded-lg ${window.getCarrierBadgeStyle(preset.carrier)}">${preset.carrier}</span>`
+          : `<span class="shrink-0 px-2.5 py-0.5 text-[11px] font-bold rounded-lg bg-slate-200 text-slate-700">공통</span>`;
+
+        container.innerHTML += `
+          <div class="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-sm flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1 space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                ${badgeHtml}
+                <strong class="text-sm font-black text-slate-900 truncate">${preset.name}</strong>
+              </div>
+              <div class="text-xs font-bold text-orange-600">
+                월 ${window.fmt(preset.price || 0)}원
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0 text-xs">
+              <button type="button" onclick="openPresetModal('${preset.id}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition border border-slate-200">수정</button>
+              <button type="button" onclick="deletePreset('${preset.id}')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-lg transition border border-rose-200">삭제</button>
+            </div>
+          </div>
+        `;
+      });
+    }
 
     // 관리자 모드 판별 (URL 파라미터 또는 프리뷰/로컬 환경 기본 허용)
     function checkAdminMode() {
@@ -964,6 +1188,7 @@
       try {
         const storedPlans = localStorage.getItem('ssalmuk_plans');
         const storedLines = localStorage.getItem('ssalmuk_lines');
+        const storedPresets = localStorage.getItem('ssalmuk_presets');
         if (storedPlans) {
           const parsedP = JSON.parse(storedPlans);
           if (Array.isArray(parsedP) && parsedP.length > 0) window.plansData = parsedP;
@@ -971,6 +1196,10 @@
         if (storedLines) {
           const parsedL = JSON.parse(storedLines);
           if (Array.isArray(parsedL) && parsedL.length > 0) window.linesData = parsedL;
+        }
+        if (storedPresets) {
+          const parsedPr = JSON.parse(storedPresets);
+          if (Array.isArray(parsedPr) && parsedPr.length > 0) window.planPresetsData = parsedPr;
         }
       } catch(err) {
         console.warn("LocalStorage 로드 실패:", err);
@@ -984,6 +1213,9 @@
         }
         if (Array.isArray(window.linesData)) {
           localStorage.setItem('ssalmuk_lines', JSON.stringify(window.linesData));
+        }
+        if (Array.isArray(window.planPresetsData)) {
+          localStorage.setItem('ssalmuk_presets', JSON.stringify(window.planPresetsData));
         }
       } catch(err) {
         console.warn("LocalStorage 저장 실패:", err);
@@ -1051,10 +1283,40 @@
           window.linesData = Array.from(lineMap.values());
           saveToLocalStorage();
         }
+
+        const presetsSnapshot = await getDocs(presetsCollection);
+        const loadedPresets = [];
+        presetsSnapshot.forEach((docSnap) => {
+          if (docSnap.exists()) {
+            loadedPresets.push(docSnap.data());
+          }
+        });
+        if (loadedPresets.length > 0) {
+          const presetMap = new Map();
+          window.planPresetsData.forEach(pr => { if (pr && pr.id) presetMap.set(pr.id, pr); });
+          loadedPresets.forEach(pr => {
+            if (pr && pr.id) {
+              const existing = presetMap.get(pr.id) || {};
+              presetMap.set(pr.id, { ...existing, ...pr });
+            }
+          });
+          window.planPresetsData = Array.from(presetMap.values());
+          saveToLocalStorage();
+        }
       } catch (e) {
         console.warn("Firestore 동기화 지연, 로컬 저장소 데이터 사용:", e);
         window.isUseLocalStorage = true;
       }
+
+      if (window.planPresetsData.length === 0) {
+        window.planPresetsData = [
+          { id: "preset-default-1", carrier: "헬로모바일", name: "LTE안심 5GB+1Mbps", price: 15900 },
+          { id: "preset-default-2", carrier: "U+모바일", name: "유심 최강가성비 (7GB+/1Mbps)", price: 17500 },
+          { id: "preset-default-3", carrier: "KTM모바일", name: "모두다 맘껏 7GB+ (1Mbps)", price: 16900 }
+        ];
+        saveToLocalStorage();
+      }
+      window.populatePresetQuickSelects();
 
       if (window.plansData.length === 0) {
         const today = new Date().toISOString().slice(0, 10);
@@ -1110,26 +1372,56 @@
       }
     };
 
+    window.savePresetsStorage = async function() {
+      saveToLocalStorage();
+      if (window.isUseLocalStorage) return;
+      try {
+        for (const preset of window.planPresetsData) {
+          if (preset && preset.id) {
+            await setDoc(doc(db, "ssalmuk_presets", preset.id), preset);
+          }
+        }
+      } catch (e) {
+        console.warn("Firestore 요금제 항목 저장 실패(로컬에는 저장됨):", e);
+      }
+    };
+
     window.switchMainTab = function(tab) {
       const mainScreen = document.getElementById("mainScreen");
       const lineScreen = document.getElementById("lineManagerScreen");
+      const presetScreen = document.getElementById("presetManagerScreen");
       const detailScreen = document.getElementById("detailScreen");
       const btnPlans = document.getElementById("navTabPlans");
       const btnLines = document.getElementById("navTabLines");
+      const btnPresets = document.getElementById("navTabPresets");
 
       if (detailScreen) detailScreen.classList.add("hidden");
+      const activeBtnClass = "px-3.5 py-2 rounded-xl bg-orange-600 text-white shadow-md transition flex items-center gap-1.5";
+      const inactiveBtnClass = "px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5";
 
       if (tab === "lines" && window.isAdminMode) {
         if (mainScreen) mainScreen.classList.add("hidden");
+        if (presetScreen) presetScreen.classList.add("hidden");
         if (lineScreen) lineScreen.classList.remove("hidden");
-        if (btnLines) btnLines.className = "px-4 py-2 rounded-xl bg-orange-600 text-white shadow-md transition flex items-center gap-1.5";
-        if (btnPlans) btnPlans.className = "px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5";
+        if (btnLines) btnLines.className = activeBtnClass;
+        if (btnPlans) btnPlans.className = inactiveBtnClass;
+        if (btnPresets) btnPresets.className = inactiveBtnClass;
         renderLinesList();
+      } else if (tab === "presets" && window.isAdminMode) {
+        if (mainScreen) mainScreen.classList.add("hidden");
+        if (lineScreen) lineScreen.classList.add("hidden");
+        if (presetScreen) presetScreen.classList.remove("hidden");
+        if (btnPresets) btnPresets.className = activeBtnClass;
+        if (btnPlans) btnPlans.className = inactiveBtnClass;
+        if (btnLines) btnLines.className = inactiveBtnClass;
+        renderPresetsList();
       } else {
         if (lineScreen) lineScreen.classList.add("hidden");
+        if (presetScreen) presetScreen.classList.add("hidden");
         if (mainScreen) mainScreen.classList.remove("hidden");
-        if (btnPlans) btnPlans.className = "px-4 py-2 rounded-xl bg-orange-600 text-white shadow-md transition flex items-center gap-1.5";
-        if (btnLines) btnLines.className = "px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5";
+        if (btnPlans) btnPlans.className = activeBtnClass;
+        if (btnLines) btnLines.className = inactiveBtnClass;
+        if (btnPresets) btnPresets.className = inactiveBtnClass;
         renderMainList();
       }
     };
@@ -1233,6 +1525,7 @@
       if (!window.isAdminMode) return;
       document.getElementById("lineForm").reset();
       document.getElementById("lineEditId").value = editId || "";
+      window.populatePresetQuickSelects();
 
       const bannerEl = document.getElementById("lineLinkedPlanBanner");
       const bannerTextEl = document.getElementById("lineLinkedPlanText");
@@ -2509,6 +2802,7 @@
       if (!window.isAdminMode) return;
       window.clearFormInputs();
       document.getElementById("formEditId").value = editId || "";
+      window.populatePresetQuickSelects();
 
       if (editId) {
         const plan = window.plansData.find(p => p.id === editId);
@@ -2682,7 +2976,7 @@
         return;
       }
       try {
-        const jsonString = JSON.stringify({ plans: window.plansData, lines: window.linesData }, null, 2);
+        const jsonString = JSON.stringify({ plans: window.plansData, lines: window.linesData, presets: window.planPresetsData }, null, 2);
         const fileName = `ssalmuk_backup_${new Date().toISOString().slice(0, 10)}.json`;
         const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
         const url = URL.createObjectURL(blob);
@@ -2706,7 +3000,7 @@
       const modal = document.getElementById("textBackupModal");
       const textarea = document.getElementById("backupTextarea");
       if (modal && textarea) {
-        textarea.value = JSON.stringify({ plans: window.plansData, lines: window.linesData }, null, 2);
+        textarea.value = JSON.stringify({ plans: window.plansData, lines: window.linesData, presets: window.planPresetsData }, null, 2);
         modal.classList.remove("hidden");
       }
     }
@@ -2751,20 +3045,22 @@
     async function processImportedText(text) {
       if (!window.isAdminMode) return;
       try {
-        if (text.charCodeAt(0) === 0xFEFF) text = text.substr(1);
-        let parsedObj = JSON.parse(text);
-
-        if (parsedObj.plans || parsedObj.lines) {
+        const parsedObj = JSON.parse(text);
+        if (parsedObj.plans || parsedObj.lines || parsedObj.presets) {
           if (parsedObj.plans) window.plansData = parsedObj.plans;
           if (parsedObj.lines) window.linesData = parsedObj.lines;
+          if (parsedObj.presets) window.planPresetsData = parsedObj.presets;
         } else if (Array.isArray(parsedObj)) {
           window.plansData = parsedObj;
         }
 
         await window.saveStorage();
         await window.saveLinesStorage();
+        await window.savePresetsStorage();
+        window.populatePresetQuickSelects();
         renderMainList();
         renderLinesList();
+        renderPresetsList();
         alert("데이터가 복원되었습니다!");
       } catch (err) {
         alert("복원 처리 중 오류: " + err.message);
