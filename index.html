@@ -244,8 +244,36 @@
         </button>
       </div>
 
-      <div class="flex items-center justify-between text-xs pt-0.5">
+      <!-- 상태별 빠른 필터 칩 -->
+      <div class="space-y-1.5">
+        <div id="lineStatusFilterChips" class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-[11px] font-bold">
+          <button type="button" data-filter="all" onclick="setLineStatusFilter('all')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-slate-900 text-white shadow-2xs transition">전체</button>
+          <button type="button" data-filter="unreceived" onclick="setLineStatusFilter('unreceived')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition">🎁 이번달 미수령</button>
+          <button type="button" data-filter="ready30" onclick="setLineStatusFilter('ready30')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 transition">🚨 탈출 가능 (30일이내)</button>
+          <button type="button" data-filter="urgent" onclick="setLineStatusFilter('urgent')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition">⏰ 탈출 임박</button>
+          <button type="button" data-filter="safe" onclick="setLineStatusFilter('safe')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">✅ 유지 중</button>
+        </div>
+
+        <!-- 통신사별 필터 칩 -->
+        <div id="lineCarrierFilterChips" class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-[11px] font-bold"></div>
+      </div>
+
+      <!-- 결과 카운트 + 정렬 드롭다운 + 간편보기 토글 -->
+      <div class="flex items-center justify-between gap-2 text-xs pt-0.5 flex-wrap">
         <span id="totalLinesCount" class="font-bold text-slate-500">총 0개 회선 등록됨</span>
+        <div class="flex items-center gap-1.5 ml-auto">
+          <select id="lineSortSelect" onchange="onLineSortChange(this.value)" class="bg-white border border-slate-300 text-slate-700 rounded-xl px-2.5 py-1.5 text-[11px] font-bold focus:outline-none focus:border-orange-500 shadow-2xs">
+            <option value="default">등록순</option>
+            <option value="activationDesc">개통일 최신순</option>
+            <option value="carrierAsc">통신사별</option>
+            <option value="targetAsc">탈출일 임박순</option>
+            <option value="giftDesc">사은품 높은순</option>
+          </select>
+          <button type="button" id="lineCompactToggleBtn" onclick="toggleAllLinesCompact()" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-[11px] font-bold flex items-center gap-1 shadow-2xs transition">
+            <i id="lineCompactToggleIcon" class="fa-solid fa-compress text-orange-600"></i>
+            <span id="lineCompactToggleText">간편보기</span>
+          </button>
+        </div>
       </div>
 
       <div id="linesList" class="space-y-3"></div>
@@ -687,6 +715,11 @@
     window.selectedEndedMonthFilter = 'all';
     window.lineActiveMonthMap = {};
     window.lineSearchQuery = "";
+    window.lineStatusFilter = "all";
+    window.lineCarrierFilter = "all";
+    window.lineSortBy = "default";
+    window.isLineCompactMode = false;
+    window.expandedLineIds = {};
     window.tempRawGifts = null;
 
     window.getCarrierBadgeStyle = function(carrier) {
@@ -1802,6 +1835,53 @@
       renderLinesList();
     }
 
+    // 회선 상태 필터 / 통신사 필터 / 정렬 / 간편보기 토글 함수
+    window.setLineStatusFilter = function(filter) {
+      window.lineStatusFilter = filter || "all";
+      document.querySelectorAll(".line-filter-chip").forEach(btn => {
+        const f = btn.getAttribute("data-filter");
+        const isSelected = f === window.lineStatusFilter;
+        if (isSelected) {
+          btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-slate-900 text-white shadow-2xs transition";
+        } else if (f === "unreceived") {
+          btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition";
+        } else if (f === "ready30") {
+          btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 transition";
+        } else if (f === "urgent") {
+          btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition";
+        } else {
+          btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition";
+        }
+      });
+      renderLinesList();
+    }
+
+    window.setLineCarrierFilter = function(carrier) {
+      window.lineCarrierFilter = carrier || "all";
+      renderLinesList();
+    }
+
+    window.onLineSortChange = function(sortVal) {
+      window.lineSortBy = sortVal || "default";
+      renderLinesList();
+    }
+
+    window.toggleAllLinesCompact = function() {
+      window.isLineCompactMode = !window.isLineCompactMode;
+      window.expandedLineIds = {};
+      const btnText = document.getElementById("lineCompactToggleText");
+      const btnIcon = document.getElementById("lineCompactToggleIcon");
+      if (btnText) btnText.innerText = window.isLineCompactMode ? "전체펼치기" : "간편보기";
+      if (btnIcon) btnIcon.className = window.isLineCompactMode ? "fa-solid fa-expand text-orange-600" : "fa-solid fa-compress text-orange-600";
+      renderLinesList();
+    }
+
+    window.toggleSingleLineExpand = function(lineId) {
+      if (!window.isLineCompactMode) return;
+      window.expandedLineIds[lineId] = !window.expandedLineIds[lineId];
+      renderLinesList();
+    }
+
     // 개별 사은품의 매월 수령일(1~31일) 변경 및 저장
     window.updateLineGiftDay = async function(lineId, gIdx, newDayVal) {
       if (!window.isAdminMode) return;
@@ -1965,20 +2045,89 @@
         netCostEl.className = "text-sm sm:text-base font-black text-rose-400";
       }
 
-      // 검색 필터링 적용
-      const query = (window.lineSearchQuery || "").toLowerCase();
-      const filteredLines = query
-        ? window.linesData.filter(line => {
-            const alias = (line.alias || "").toLowerCase();
-            const carrier = (line.carrier || "").toLowerCase();
-            const planName = (line.planName || "").toLowerCase();
-            const memo = (line.memo || "").toLowerCase();
-            return alias.includes(query) || carrier.includes(query) || planName.includes(query) || memo.includes(query);
-          })
-        : window.linesData;
+      // 통신사별 필터 칩 렌더링
+      const carrierChipsContainer = document.getElementById("lineCarrierFilterChips");
+      if (carrierChipsContainer) {
+        const carrierCounts = {};
+        window.linesData.forEach(l => {
+          const cName = (l.carrier || "알뜰폰").trim();
+          carrierCounts[cName] = (carrierCounts[cName] || 0) + 1;
+        });
+        const uniqueCarriers = Object.keys(carrierCounts);
+        if (uniqueCarriers.length > 0) {
+          if (window.lineCarrierFilter !== "all" && !carrierCounts[window.lineCarrierFilter]) {
+            window.lineCarrierFilter = "all";
+          }
+          let chipsHtml = `<button type="button" onclick="setLineCarrierFilter('all')" class="shrink-0 px-2.5 py-1 rounded-lg border transition ${window.lineCarrierFilter === 'all' ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">통신사 전체</button>`;
+          uniqueCarriers.forEach(cName => {
+            const isSel = window.lineCarrierFilter === cName;
+            chipsHtml += `<button type="button" onclick="setLineCarrierFilter('${cName.replace(/'/g, "\\'")}')" class="shrink-0 px-2.5 py-1 rounded-lg border transition ${isSel ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}">${cName} (${carrierCounts[cName]})</button>`;
+          });
+          carrierChipsContainer.innerHTML = chipsHtml;
+        } else {
+          carrierChipsContainer.innerHTML = "";
+        }
+      }
 
-      document.getElementById("totalLinesCount").innerText = query
-        ? `검색 결과 ${filteredLines.length}개 / 전체 ${totalLines}개 회선`
+      // 검색 + 상태 필터링 + 통신사 필터링 + 정렬 적용
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
+
+      const query = (window.lineSearchQuery || "").toLowerCase();
+      let filteredLines = window.linesData.filter(line => {
+        if (query) {
+          const alias = (line.alias || "").toLowerCase();
+          const carrier = (line.carrier || "").toLowerCase();
+          const planName = (line.planName || "").toLowerCase();
+          const memo = (line.memo || "").toLowerCase();
+          if (!alias.includes(query) && !carrier.includes(query) && !planName.includes(query) && !memo.includes(query)) {
+            return false;
+          }
+        }
+
+        if (window.lineCarrierFilter && window.lineCarrierFilter !== "all") {
+          const cName = (line.carrier || "알뜰폰").trim();
+          if (cName !== window.lineCarrierFilter) return false;
+        }
+
+        if (window.lineStatusFilter && window.lineStatusFilter !== "all") {
+          const st = window.getLineStatusInfo(line.targetDate, line.activationDate);
+          if (window.lineStatusFilter === "unreceived") {
+            const schedule = window.getLineMonthlyGiftSchedule(line);
+            const curEntry = schedule.find(item => item.ymKey === currentYM);
+            const hasUnreceived = curEntry && curEntry.giftObjects && curEntry.giftObjects.some(g => !g.isReceived);
+            if (!hasUnreceived) return false;
+          } else if (window.lineStatusFilter === "ready30") {
+            if (!line.targetDate) return false;
+            const targetD = new Date(line.targetDate + "T00:00:00");
+            const diffDays = Math.ceil((targetD.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays > 30) return false;
+          } else if (st.code !== window.lineStatusFilter) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      if (window.lineSortBy && window.lineSortBy !== "default") {
+        filteredLines = [...filteredLines].sort((a, b) => {
+          if (window.lineSortBy === "activationDesc") {
+            return (b.activationDate || "").localeCompare(a.activationDate || "");
+          } else if (window.lineSortBy === "carrierAsc") {
+            return (a.carrier || "").localeCompare(b.carrier || "");
+          } else if (window.lineSortBy === "targetAsc") {
+            return (a.targetDate || "9999-12-31").localeCompare(b.targetDate || "9999-12-31");
+          } else if (window.lineSortBy === "giftDesc") {
+            return window.calculateLineGiftValForCurrentMonth(b) - window.calculateLineGiftValForCurrentMonth(a);
+          }
+          return 0;
+        });
+      }
+
+      const isFiltered = query || window.lineStatusFilter !== "all" || window.lineCarrierFilter !== "all";
+      document.getElementById("totalLinesCount").innerText = isFiltered
+        ? `필터 결과 ${filteredLines.length}개 / 전체 ${totalLines}개 회선`
         : `총 ${totalLines}개 회선 등록됨`;
 
       if (totalLines === 0) {
@@ -1996,8 +2145,8 @@
         container.innerHTML = `
           <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-xs space-y-2 shadow-sm">
             <i class="fa-solid fa-magnifying-glass text-2xl text-slate-300"></i>
-            <div class="font-bold text-slate-800">'${window.lineSearchQuery}'에 일치하는 회선이 없습니다.</div>
-            <button type="button" onclick="clearLineSearch()" class="mt-1 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[11px]">검색 초기화</button>
+            <div class="font-bold text-slate-800">조건에 일치하는 회선이 없습니다.</div>
+            <button type="button" onclick="clearLineSearch(); setLineStatusFilter('all'); setLineCarrierFilter('all');" class="mt-1 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[11px]">필터/검색 전체 초기화</button>
           </div>
         `;
         return;
@@ -2008,6 +2157,37 @@
         const carrierBadgeStyle = window.getCarrierBadgeStyle(line.carrier);
         const thisMonthGift = window.calculateLineGiftValForCurrentMonth(line);
         const monthlySchedule = window.getLineMonthlyGiftSchedule(line);
+        const isCollapsed = window.isLineCompactMode && !window.expandedLineIds[line.id];
+
+        if (isCollapsed) {
+          const curEntry = monthlySchedule.find(item => item.ymKey === currentYM);
+          const unreceivedCount = (curEntry && curEntry.giftObjects) ? curEntry.giftObjects.filter(g => !g.isReceived).length : 0;
+          const giftBadgeHtml = unreceivedCount > 0
+            ? `<span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-black">미수령 ${unreceivedCount}건</span>`
+            : (thisMonthGift > 0 ? `<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">수령완료</span>` : '');
+
+          container.innerHTML += `
+            <div onclick="toggleSingleLineExpand('${line.id}')" class="bg-white rounded-2xl border border-slate-200 px-3.5 py-3 shadow-2xs hover:border-orange-300 transition cursor-pointer flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0 flex-1">
+                <span class="shrink-0 px-2 py-0.5 text-[10px] font-black rounded-md ${carrierBadgeStyle}">${line.carrier || '알뜰폰'}</span>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <strong class="text-xs sm:text-sm font-black text-slate-900 truncate">${line.alias}</strong>
+                    ${giftBadgeHtml}
+                  </div>
+                  <div class="text-[10px] text-slate-500 truncate mt-0.5">
+                    ${line.planName || '기본 요금제'} · 월 ${window.fmt(line.monthlyFee)}원 ${thisMonthGift > 0 ? `· <span class="text-emerald-600 font-bold">${monthDisplayLabel} +${window.fmt(thisMonthGift)}원</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="px-2 py-0.5 text-[10px] rounded-md ${statusInfo.class}">${statusInfo.text}</span>
+                <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] ml-0.5"></i>
+              </div>
+            </div>
+          `;
+          return;
+        }
 
         let scheduleHtml = '';
         if (monthlySchedule.length > 0) {
@@ -2124,7 +2304,7 @@
 
         container.innerHTML += `
           <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:border-slate-300 transition space-y-3">
-            <div class="flex items-start justify-between gap-2">
+            <div onclick="toggleSingleLineExpand('${line.id}')" class="flex items-start justify-between gap-2 ${window.isLineCompactMode ? 'cursor-pointer' : ''}">
               <div class="flex items-start gap-2.5 min-w-0 flex-1">
                 <span class="shrink-0 px-2.5 py-1 text-xs font-black rounded-lg shadow-sm ${carrierBadgeStyle}">${line.carrier || '알뜰폰'}</span>
                 <div class="min-w-0 flex-1">
@@ -2136,7 +2316,10 @@
                   </div>
                 </div>
               </div>
-              <span class="shrink-0 px-2.5 py-1 text-[10px] rounded-lg ${statusInfo.class}">${statusInfo.text}</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="px-2.5 py-1 text-[10px] rounded-lg ${statusInfo.class}">${statusInfo.text}</span>
+                ${window.isLineCompactMode ? `<i class="fa-solid fa-chevron-up text-slate-400 text-xs ml-0.5"></i>` : ''}
+              </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/80">
