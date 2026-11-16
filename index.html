@@ -195,7 +195,7 @@
             <strong id="dashSafeLines" class="text-base font-black text-emerald-400">0개</strong>
           </div>
           <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-            <span class="text-[10px] text-amber-400 block font-semibold">탈출 임박 (7일이내)</span>
+            <span class="text-[10px] text-amber-400 block font-semibold">탈출 준비 (30일이내)</span>
             <strong id="dashUrgentLines" class="text-base font-black text-amber-400">0개</strong>
           </div>
           <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
@@ -250,7 +250,7 @@
           <button type="button" data-filter="all" onclick="setLineStatusFilter('all')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-slate-900 text-white shadow-2xs transition">전체</button>
           <button type="button" data-filter="unreceived" onclick="setLineStatusFilter('unreceived')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition">🎁 이번달 미수령</button>
           <button type="button" data-filter="ready30" onclick="setLineStatusFilter('ready30')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 transition">🚨 탈출 가능 (30일이내)</button>
-          <button type="button" data-filter="urgent" onclick="setLineStatusFilter('urgent')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition">⏰ 탈출 임박</button>
+          <button type="button" data-filter="urgent" onclick="setLineStatusFilter('urgent')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition">🚨 탈출 준비</button>
           <button type="button" data-filter="safe" onclick="setLineStatusFilter('safe')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">✅ 유지 중</button>
         </div>
 
@@ -318,7 +318,7 @@
           <button id="btnEditPlan" class="px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition border border-slate-200">
             <i class="fa-solid fa-pen"></i> 수정
           </button>
-          <button id="btnDeletePlan" class="px-2.5 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition border border-rose-200">
+          <button id="btnDeletePlan" class="px-2.5 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition border border-slate-200">
             <i class="fa-solid fa-trash"></i> 삭제
           </button>
         </div>
@@ -326,7 +326,6 @@
 
       <div class="space-y-2.5 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div class="flex items-start gap-2.5">
-          <!-- 통신사 눈에 띄는 바 -->
           <span id="detailCarrierBadge" class="shrink-0 px-3 py-1 text-xs font-black rounded-lg shadow-sm">
             -
           </span>
@@ -438,7 +437,7 @@
 
   <!-- ==================== ADD/EDIT PLAN MODAL ==================== -->
   <div id="planModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-[#F8FAFC] rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden my-auto">
+    <div class="bg-[#F8FAFC] rounded-3xl max-w-lg w-full max-h-[80dvh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden my-auto">
       <input type="hidden" id="formEditId" value="">
       
       <div class="px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
@@ -449,7 +448,7 @@
       </div>
 
       <form id="planForm" onsubmit="savePlanForm(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
+        <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1 pb-16">
           <div class="grid grid-cols-2 gap-2.5">
             <div>
               <label class="block font-bold text-slate-700 mb-1">통신사</label>
@@ -476,7 +475,7 @@
 
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-2">
             <label class="block font-bold text-slate-900">📅 이벤트 기간 설정</label>
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label class="text-[10px] font-bold text-slate-500 block mb-0.5">시작일</label>
                 <input type="date" id="formStartDate" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800">
@@ -522,7 +521,7 @@
           </div>
         </div>
 
-        <div class="p-4 bg-white border-t border-slate-200 flex justify-end gap-2 shrink-0">
+        <div class="p-4 bg-white border-t border-slate-200 flex justify-end gap-2 shrink-0 pb-6">
           <button type="button" onclick="closeAddModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs border border-slate-200">취소</button>
           <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-bold rounded-xl text-xs shadow-md shadow-orange-600/20 hover:bg-orange-700 transition">저장하기</button>
         </div>
@@ -532,7 +531,7 @@
 
   <!-- ==================== ADD/EDIT LINE MODAL ==================== -->
   <div id="lineModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-[#F8FAFC] rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden my-auto">
+    <div class="bg-[#F8FAFC] rounded-3xl max-w-lg w-full max-h-[80dvh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden my-auto">
       <input type="hidden" id="lineEditId" value="">
       
       <div class="px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
@@ -543,7 +542,7 @@
       </div>
 
       <form id="lineForm" onsubmit="saveLineForm(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
+        <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1 pb-16">
           <div id="lineLinkedPlanBanner" class="hidden bg-orange-50 border border-orange-200 p-2.5 rounded-xl flex items-center gap-2 text-orange-800 font-bold text-[11px]">
             <i class="fa-solid fa-link text-orange-600"></i>
             <span id="lineLinkedPlanText">연동된 요금제</span>
@@ -554,7 +553,7 @@
             <input type="text" id="lineAlias" required placeholder="예: 010-1234-5678 / 메인폰_KT 등" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 focus:border-orange-500 focus:outline-none">
           </div>
 
-          <div class="grid grid-cols-2 gap-2.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label class="block font-bold text-slate-700 mb-1">통신사 (자동연동 · 선택수정)</label>
               <select id="lineCarrierSelect" onchange="onLineCarrierSelectChange(this.value)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:border-orange-500 focus:outline-none font-bold text-slate-800">
@@ -580,7 +579,7 @@
             </select>
           </div>
 
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div>
               <label class="block font-bold text-slate-700 mb-1">월 청구요금 (원)</label>
               <input type="number" id="lineMonthlyFee" required placeholder="0" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-orange-600 focus:border-orange-500 focus:outline-none">
@@ -610,7 +609,7 @@
           </div>
         </div>
 
-        <div class="p-4 bg-white border-t border-slate-200 flex justify-end gap-2 shrink-0">
+        <div class="p-4 bg-white border-t border-slate-200 flex justify-end gap-2 shrink-0 pb-6">
           <button type="button" onclick="closeLineModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs border border-slate-200">취소</button>
           <button type="submit" class="px-5 py-2 bg-orange-600 text-white font-bold rounded-xl text-xs shadow-md shadow-orange-600/20 hover:bg-orange-700 transition">저장하기</button>
         </div>
@@ -686,7 +685,7 @@
   <!-- Firebase Integration Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnKOnOEjoZOOJpK2T2mpyRmJr5s2Kkdmo",
@@ -714,6 +713,7 @@
     window.isEndedPlansOpen = false;
     window.selectedEndedMonthFilter = 'all';
     window.lineActiveMonthMap = {};
+    window.lineMonthScrollMap = {};
     window.lineSearchQuery = "";
     window.lineStatusFilter = "all";
     window.lineCarrierFilter = "all";
@@ -732,7 +732,6 @@
       return 'bg-slate-700 text-white';
     };
 
-    // 방문자 수 카운터 초기화 및 업데이트 (오늘 방문자 + 누적 방문자)
     async function initVisitorCounter() {
       const badge = document.getElementById("visitorCountBadge");
       const todayNumEl = document.getElementById("todayVisitorCountNum");
@@ -805,9 +804,7 @@
         }
         localStorage.setItem(localCountKey, String(displayTotal));
         localStorage.setItem(localDailyKey, JSON.stringify({ date: todayStr, count: displayToday }));
-      } catch (e) {
-        // Firestore 권한 제한 시 로컬 카운터 유지
-      }
+      } catch (e) {}
 
       todayNumEl.innerText = window.fmt(displayToday);
       totalNumEl.innerText = window.fmt(displayTotal);
@@ -815,7 +812,6 @@
       badge.classList.add("inline-flex");
     }
 
-    // 종료된 요금제 아코디언 토글
     window.toggleEndedPlansList = function() {
       window.isEndedPlansOpen = !window.isEndedPlansOpen;
       const listEl = document.getElementById("endedPlansList");
@@ -828,7 +824,6 @@
       }
     };
 
-    // 종료된 요금제 월별 필터 변경
     window.onEndedMonthFilterChange = function() {
       const sel = document.getElementById("endedPlansMonthFilter");
       if (sel) {
@@ -837,7 +832,6 @@
       }
     };
 
-    // 모달 통신사 드롭다운 변경 처리
     window.onCarrierSelectChange = function(val) {
       const customInput = document.getElementById("formCarrierCustom");
       if (!customInput) return;
@@ -885,7 +879,6 @@
       return sel.value;
     };
 
-    // 회선 관리자 모달 통신사 드롭다운 제어
     window.onLineCarrierSelectChange = function(val) {
       const customInput = document.getElementById("lineCarrierCustom");
       if (!customInput) return;
@@ -933,81 +926,6 @@
       return sel.value;
     };
 
-    // 회선 관리자 모달 요금제 이름 드롭다운 제어
-    window.populateLinePlanNameOptions = function() {
-      const sel = document.getElementById("linePlanNameSelect");
-      if (!sel) return;
-
-      const planNames = new Set();
-      (window.plansData || []).forEach(p => {
-        (p.options || []).forEach(opt => {
-          if (opt && opt.name && opt.name.trim()) {
-            planNames.add(opt.name.trim());
-          }
-        });
-      });
-      (window.linesData || []).forEach(l => {
-        if (l && l.planName && l.planName.trim()) {
-          planNames.add(l.planName.trim());
-        }
-      });
-
-      sel.innerHTML = "";
-      planNames.forEach(name => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        sel.appendChild(option);
-      });
-
-      const customOpt = document.createElement("option");
-      customOpt.value = "custom";
-      customOpt.textContent = "+ 직접 입력";
-      sel.appendChild(customOpt);
-    };
-
-    window.onLinePlanNameSelectChange = function(val) {
-      const customInput = document.getElementById("linePlanName");
-      if (!customInput) return;
-      if (val === "custom") {
-        customInput.classList.remove("hidden");
-        customInput.focus();
-      } else {
-        customInput.classList.add("hidden");
-        customInput.value = val;
-      }
-    };
-
-    window.setLinePlanNameValueToForm = function(planName) {
-      window.populateLinePlanNameOptions();
-      const sel = document.getElementById("linePlanNameSelect");
-      const customInput = document.getElementById("linePlanName");
-      if (!sel || !customInput) return;
-
-      const trimmed = (planName || "").trim();
-      const existsInSelect = Array.from(sel.options).some(o => o.value === trimmed && trimmed !== "custom");
-
-      if (trimmed && existsInSelect) {
-        sel.value = trimmed;
-        customInput.value = trimmed;
-        customInput.classList.add("hidden");
-      } else if (trimmed) {
-        sel.value = "custom";
-        customInput.value = trimmed;
-        customInput.classList.remove("hidden");
-      } else {
-        if (sel.options.length > 1) {
-          sel.selectedIndex = 0;
-          customInput.value = sel.value;
-          customInput.classList.add("hidden");
-        } else {
-          sel.value = "custom";
-          customInput.value = "";
-          customInput.classList.remove("hidden");
-        }
-      }
-    };
-    // 회선 관리자 모달 요금제 이름 직접 입력 제어
     window.setLinePlanNameValueToForm = function(planName) {
       const inputs = document.querySelectorAll("#lineModal #linePlanName");
       inputs.forEach(input => { input.value = (planName || "").trim(); });
@@ -1018,7 +936,6 @@
       return input ? input.value.trim() : "";
     };
 
-    // ==================== 요금제 항목(Presets) 관리 함수 ====================
     window.populatePresetQuickSelects = function() {
       const selects = [
         { id: "planPresetQuickSelect", placeholder: "📥 요금제 항목에서 불러오기..." },
@@ -1128,9 +1045,7 @@
       try {
         if (!window.isUseLocalStorage) await deleteDoc(doc(db, "ssalmuk_presets", id));
         saveToLocalStorage();
-      } catch (e) {
-        console.warn("요금제 항목 삭제 동기화 실패:", e);
-      }
+      } catch (e) {}
       window.populatePresetQuickSelects();
       renderPresetsList();
     };
@@ -1181,7 +1096,6 @@
       });
     }
 
-    // 관리자 모드 판별 (URL 파라미터 또는 프리뷰/로컬 환경 기본 허용)
     function checkAdminMode() {
       const urlParams = new URLSearchParams(window.location.search);
       const isPreviewEnv = window.location.protocol === 'about:' || 
@@ -1216,7 +1130,6 @@
       }
     }
 
-    // LocalStorage Fallback 도우미 함수
     function loadFromLocalStorage() {
       try {
         const storedPlans = localStorage.getItem('ssalmuk_plans');
@@ -1234,9 +1147,7 @@
           const parsedPr = JSON.parse(storedPresets);
           if (Array.isArray(parsedPr) && parsedPr.length > 0) window.planPresetsData = parsedPr;
         }
-      } catch(err) {
-        console.warn("LocalStorage 로드 실패:", err);
-      }
+      } catch(err) {}
     }
 
     function saveToLocalStorage() {
@@ -1250,16 +1161,12 @@
         if (Array.isArray(window.planPresetsData)) {
           localStorage.setItem('ssalmuk_presets', JSON.stringify(window.planPresetsData));
         }
-      } catch(err) {
-        console.warn("LocalStorage 저장 실패:", err);
-      }
+      } catch(err) {}
     }
 
     async function loadStorage() {
-      // 1. LocalStorage 우선 로드 (유실 방지)
       loadFromLocalStorage();
 
-      // 2. Firebase 데이터 병합 및 최신화 (기존 데이터 덮어쓰기 방지)
       try {
         const querySnapshot = await getDocs(plansCollection);
         const loadedPlans = [];
@@ -1337,7 +1244,6 @@
           saveToLocalStorage();
         }
       } catch (e) {
-        console.warn("Firestore 동기화 지연, 로컬 저장소 데이터 사용:", e);
         window.isUseLocalStorage = true;
       }
 
@@ -1386,9 +1292,7 @@
             await setDoc(doc(db, "ssalmuk_plans", plan.id), plan);
           }
         }
-      } catch (e) {
-        console.warn("Firestore 요금제 저장 실패(로컬에는 저장됨):", e);
-      }
+      } catch (e) {}
     };
 
     window.saveLinesStorage = async function() {
@@ -1400,9 +1304,7 @@
             await setDoc(doc(db, "ssalmuk_lines", line.id), line);
           }
         }
-      } catch (e) {
-        console.warn("Firestore 회선 저장 실패(로컬에는 저장됨):", e);
-      }
+      } catch (e) {}
     };
 
     window.savePresetsStorage = async function() {
@@ -1414,9 +1316,7 @@
             await setDoc(doc(db, "ssalmuk_presets", preset.id), preset);
           }
         }
-      } catch (e) {
-        console.warn("Firestore 요금제 항목 저장 실패(로컬에는 저장됨):", e);
-      }
+      } catch (e) {}
     };
 
     window.switchMainTab = function(tab) {
@@ -1632,7 +1532,6 @@
       const editId = document.getElementById("lineEditId").value;
       const existingLine = editId ? window.linesData.find(l => l.id === editId) : null;
 
-      // 모달 내 사은품 행 수집
       const lineGiftRows = document.querySelectorAll(".line-gift-row");
       const parsedGifts = [];
       const updatedGiftDays = {};
@@ -1700,14 +1599,11 @@
         try {
           if (!window.isUseLocalStorage) await deleteDoc(doc(db, "ssalmuk_lines", id));
           saveToLocalStorage();
-        } catch(e) {
-          console.error("회선 삭제 실패:", e);
-        }
+        } catch(e) {}
         renderLinesList();
       }
     }
 
-    // 회선 상태 및 개통 경과일 계산 함수 (통합 버전)
     window.getLineStatusInfo = function(targetDateStr, activationDateStr) {
       const today = new Date();
       today.setHours(0,0,0,0);
@@ -1729,12 +1625,12 @@
       const diffTime = target.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays > 7) {
+      if (diffDays > 30) {
         const prefix = elapsedText ? `${elapsedText} · ` : '';
         return { text: `${prefix}탈출 D-${diffDays}`, class: 'bg-emerald-100 text-emerald-800 font-bold', code: 'safe' };
       } else if (diffDays > 0) {
         const prefix = elapsedText ? `${elapsedText} · ` : '';
-        return { text: `${prefix}탈출 임박 (D-${diffDays})`, class: 'bg-amber-100 text-amber-800 font-bold', code: 'urgent' };
+        return { text: `${prefix}탈출 준비 (D-${diffDays})`, class: 'bg-amber-100 text-amber-800 font-bold', code: 'urgent' };
       } else if (diffDays === 0) {
         return { text: `${elapsedText ? elapsedText + ' · ' : ''}D-DAY 오늘 탈출가능!`, class: 'bg-rose-600 text-white font-black animate-pulse', code: 'ready' };
       } else {
@@ -1742,7 +1638,6 @@
       }
     }
 
-    // 탈출월까지 월별 사은품 수령 일정 계산 (개별 사은품 객체 포함)
     window.getLineMonthlyGiftSchedule = function(line) {
       if (!line || !line.activationDate || !line.targetDate) return [];
       const actD = new Date(line.activationDate + "T00:00:00");
@@ -1769,7 +1664,6 @@
               const checkKey = `${ymKey}_${gIdx}`;
               const isReceived = !!(line.receivedGifts && line.receivedGifts[checkKey]);
               
-              // 사은품별 매월 수령일(1~31일) 결정: 개별 수정값 -> 요금제 사은품 설정값 -> 회선 기본 수령일 -> 기존 저장 날짜 추출
               let receiveDay = "";
               if (line.giftDays && line.giftDays[gIdx]) {
                 receiveDay = line.giftDays[gIdx];
@@ -1816,7 +1710,6 @@
       return schedule;
     }
 
-    // 회선 검색어 변경 및 초기화
     window.onLineSearchChange = function(val) {
       window.lineSearchQuery = (val || "").trim();
       const clearBtn = document.getElementById("lineSearchClearBtn");
@@ -1835,7 +1728,6 @@
       renderLinesList();
     }
 
-    // 회선 상태 필터 / 통신사 필터 / 정렬 / 간편보기 토글 함수
     window.setLineStatusFilter = function(filter) {
       window.lineStatusFilter = filter || "all";
       document.querySelectorAll(".line-filter-chip").forEach(btn => {
@@ -1882,7 +1774,6 @@
       renderLinesList();
     }
 
-    // 개별 사은품의 매월 수령일(1~31일) 변경 및 저장
     window.updateLineGiftDay = async function(lineId, gIdx, newDayVal) {
       if (!window.isAdminMode) return;
       const line = window.linesData.find(l => l.id === lineId);
@@ -1904,7 +1795,6 @@
       renderLinesList();
     }
 
-    // 회선 월별 사은품 조회 월 이동
     window.changeLineScheduleMonth = function(lineId, delta, maxMonths) {
       const cur = window.lineActiveMonthMap[lineId] || 1;
       const next = Math.max(1, Math.min(maxMonths, cur + delta));
@@ -1912,12 +1802,14 @@
       renderLinesList();
     }
 
-    window.setLineScheduleMonth = function(lineId, monthIdx) {
+    window.setLineScheduleMonth = function(lineId, monthIdx, containerEl) {
       window.lineActiveMonthMap[lineId] = monthIdx;
+      if (containerEl) {
+        window.lineMonthScrollMap[lineId] = containerEl.scrollLeft;
+      }
       renderLinesList();
     }
 
-    // 사은품 수령 여부 체크박스 토글 및 저장
     window.toggleLineGiftReceived = async function(lineId, checkKey) {
       if (!window.isAdminMode) return;
       const line = window.linesData.find(l => l.id === lineId);
@@ -1998,6 +1890,9 @@
       let totalReceivedGiftAll = 0;
       let totalPendingGiftAll = 0;
 
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
+
       window.linesData.forEach(line => {
         totalFee += (line.monthlyFee || 0);
         const lineMonthGift = window.calculateLineGiftValForCurrentMonth(line);
@@ -2045,7 +1940,6 @@
         netCostEl.className = "text-sm sm:text-base font-black text-rose-400";
       }
 
-      // 통신사별 필터 칩 렌더링
       const carrierChipsContainer = document.getElementById("lineCarrierFilterChips");
       if (carrierChipsContainer) {
         const carrierCounts = {};
@@ -2068,10 +1962,6 @@
           carrierChipsContainer.innerHTML = "";
         }
       }
-
-      // 검색 + 상태 필터링 + 통신사 필터링 + 정렬 적용
-      const todayMidnight = new Date();
-      todayMidnight.setHours(0, 0, 0, 0);
 
       const query = (window.lineSearchQuery || "").toLowerCase();
       let filteredLines = window.linesData.filter(line => {
@@ -2200,6 +2090,9 @@
           const activeMIdx = Math.min(monthlySchedule.length, Math.max(1, window.lineActiveMonthMap[line.id] || defaultMIdx));
           const activeMonthData = monthlySchedule[activeMIdx - 1];
 
+          const scrollContainerId = `scrollContainer_${line.id}`;
+          const savedScrollLeft = window.lineMonthScrollMap[line.id] || 0;
+
           const monthDotsHtml = monthlySchedule.map(item => {
             const hasGift = item.giftObjects.length > 0;
             const allReceived = hasGift && item.giftObjects.every(g => g.isReceived);
@@ -2215,28 +2108,29 @@
             }
 
             return `
-              <button type="button" onclick="setLineScheduleMonth('${line.id}', ${item.mIndex})" class="shrink-0 px-2 py-1 rounded-lg border text-[10px] transition ${chipClass}">
+              <button type="button" onclick="setLineScheduleMonth('${line.id}', ${item.mIndex}, document.getElementById('${scrollContainerId}'))" class="shrink-0 px-2 py-1 rounded-lg border text-[10px] transition ${chipClass}">
                 ${item.shortMonthLabel}${allReceived ? '✓' : (hasGift ? '•' : '')}
               </button>
             `;
           }).join('');
 
-          // 선택된 달의 사은품 리스트 및 수령 체크박스 + 받는 날짜 입력
           let giftsChecklistHtml = '';
           if (activeMonthData.giftObjects.length > 0) {
             giftsChecklistHtml = `
               <div class="space-y-1.5 pt-1">
                 ${activeMonthData.giftObjects.map(g => `
-                  <div onclick="event.stopPropagation()" class="p-2 rounded-lg border transition space-y-1.5 ${g.isReceived ? 'bg-emerald-100/60 border-emerald-300' : 'bg-white border-slate-200 hover:border-emerald-300'}">
-                    <label class="flex items-center justify-between cursor-pointer">
-                      <div class="flex items-center gap-2 min-w-0">
-                        <input type="checkbox" ${g.isReceived ? 'checked' : ''} onchange="toggleLineGiftReceived('${line.id}', '${g.checkKey}')" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
-                        <div class="min-w-0">
-                          <div class="font-bold text-xs truncate ${g.isReceived ? 'line-through text-slate-500' : 'text-slate-900'}">${g.name}</div>
-                          ${g.cond ? `<div class="text-[10px] text-slate-500 truncate">${g.cond}</div>` : ''}
+                  <div onclick="event.stopPropagation()" class="p-2.5 rounded-xl border transition space-y-2 ${g.isReceived ? 'bg-emerald-100/60 border-emerald-300' : 'bg-white border-slate-200 hover:border-emerald-300'}">
+                    <label class="flex items-start justify-between cursor-pointer gap-2">
+                      <div class="flex items-start gap-2 min-w-0 flex-1">
+                        <input type="checkbox" ${g.isReceived ? 'checked' : ''} onchange="toggleLineGiftReceived('${line.id}', '${g.checkKey}')" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0 mt-0.5">
+                        <div class="min-w-0 flex-1">
+                          <div class="font-bold text-xs ${g.isReceived ? 'line-through text-slate-500' : 'text-slate-900'}">${g.name}</div>
+                          ${g.cond ? `<div class="text-[10px] text-slate-500">${g.cond}</div>` : ''}
                         </div>
                       </div>
-                    <div class="flex items-center justify-between pt-1.5 border-t border-slate-200/70 text-[10px]">
+                      <span class="font-black text-orange-600 text-xs shrink-0">+${window.fmt(g.val)}원</span>
+                    </label>
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-200/70 text-[10px]">
                       <span class="font-bold text-slate-600 flex items-center gap-1">
                         <i class="fa-regular fa-calendar text-emerald-600"></i> 지급일 설정
                         ${g.receiveDate ? `<span class="text-emerald-700 font-extrabold">(${g.receiveDate})</span>` : ''}
@@ -2268,7 +2162,6 @@
                 <span class="text-emerald-700 font-black text-[11px]">누적 예정 +${window.fmt(totalExpectedGift)}원</span>
               </div>
 
-              <!-- 한 달씩 이동 컨트롤러 -->
               <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
                 <button type="button" onclick="changeLineScheduleMonth('${line.id}', -1, ${monthlySchedule.length})" ${activeMIdx <= 1 ? 'disabled' : ''} class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 text-slate-700 flex items-center justify-center transition">
                   <i class="fa-solid fa-chevron-left text-xs"></i>
@@ -2284,15 +2177,19 @@
                 </button>
               </div>
 
-              <!-- 선택된 달의 사은품 체크리스트 -->
               ${giftsChecklistHtml}
 
-              <!-- 전체 개월 빠른 이동 칩 -->
-              <div class="flex items-center gap-1 overflow-x-auto custom-scrollbar pt-0.5 pb-0.5">
+              <div id="${scrollContainerId}" onscroll="window.lineMonthScrollMap['${line.id}'] = this.scrollLeft" class="flex items-center gap-1 overflow-x-auto custom-scrollbar pt-0.5 pb-0.5">
                 ${monthDotsHtml}
               </div>
             </div>
           `;
+
+          setTimeout(() => {
+            const scEl = document.getElementById(scrollContainerId);
+            if (scEl) scEl.scrollLeft = savedScrollLeft;
+          }, 0);
+
         } else if (line.giftsSummary) {
           scheduleHtml = `
             <div class="text-[11px] text-slate-600 bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
@@ -2304,21 +2201,21 @@
 
         container.innerHTML += `
           <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:border-slate-300 transition space-y-3">
-            <div onclick="toggleSingleLineExpand('${line.id}')" class="flex items-start justify-between gap-2 ${window.isLineCompactMode ? 'cursor-pointer' : ''}">
-              <div class="flex items-start gap-2.5 min-w-0 flex-1">
-                <span class="shrink-0 px-2.5 py-1 text-xs font-black rounded-lg shadow-sm ${carrierBadgeStyle}">${line.carrier || '알뜰폰'}</span>
-                <div class="min-w-0 flex-1">
-                  <h3 class="text-base font-black text-slate-900 truncate">${line.alias}</h3>
-                  <div class="mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-orange-50 border border-orange-200 text-orange-700 text-xs font-black rounded-lg">
-                      <i class="fa-solid fa-sim-card text-[10px]"></i> ${line.planName || '기본 요금제'}
-                    </span>
-                  </div>
+            <div onclick="toggleSingleLineExpand('${line.id}')" class="${window.isLineCompactMode ? 'cursor-pointer' : ''}">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 text-xs font-black rounded-lg shadow-sm ${carrierBadgeStyle}">${line.carrier || '알뜰폰'}</span>
+                  <span class="px-2.5 py-1 text-[10px] rounded-lg ${statusInfo.class}">${statusInfo.text}</span>
                 </div>
+                ${window.isLineCompactMode ? `<i class="fa-solid fa-chevron-up text-slate-400 text-xs"></i>` : ''}
               </div>
-              <div class="flex items-center gap-1.5 shrink-0">
-                <span class="px-2.5 py-1 text-[10px] rounded-lg ${statusInfo.class}">${statusInfo.text}</span>
-                ${window.isLineCompactMode ? `<i class="fa-solid fa-chevron-up text-slate-400 text-xs ml-0.5"></i>` : ''}
+              <div class="w-full space-y-1">
+                <h3 class="text-base font-black text-slate-900 break-words">${line.alias}</h3>
+                <div>
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-orange-50 border border-orange-200 text-orange-700 text-xs font-black rounded-lg break-all">
+                    <i class="fa-solid fa-sim-card text-[10px]"></i> ${line.planName || '기본 요금제'}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -2354,7 +2251,7 @@
 
             <div class="flex justify-end gap-1.5 pt-1 border-t border-slate-100 text-xs">
               <button onclick="openLineModal('${line.id}')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition border border-slate-200">수정</button>
-              <button onclick="deleteLine('${line.id}')" class="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-lg transition border border-rose-200">삭제</button>
+              <button onclick="deleteLine('${line.id}')" class="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-lg transition border border-slate-200">삭제</button>
             </div>
           </div>
         `;
@@ -2368,9 +2265,7 @@
         try {
           if (!window.isUseLocalStorage) await deleteDoc(doc(db, "ssalmuk_plans", id));
           saveToLocalStorage();
-        } catch(e) {
-          console.error("삭제 동기화 오류:", e);
-        }
+        } catch(e) {}
         showMainScreen();
       }
     }
@@ -2432,9 +2327,9 @@
     }
 
     function renderMainList() {
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-      // 진행 중 / 종료 분리
       const activePlans = [];
       const endedPlans = [];
 
@@ -2468,7 +2363,6 @@
         });
       }
 
-      // 종료된 요금제 섹션 처리
       const endedSection = document.getElementById("endedPlansSection");
       const endedCardsContainer = document.getElementById("endedPlansCardsContainer");
       const endedCountEl = document.getElementById("endedPlansCount");
@@ -2478,12 +2372,11 @@
         endedSection.classList.remove("hidden");
         endedCountEl.innerText = endedPlans.length;
 
-        // 월별 목록 생성 (종료일 YYYY-MM 기준)
         const monthSet = new Set();
         endedPlans.forEach(p => {
           const dateStr = p.eventEndDate || p.startDate || "";
           if (dateStr.length >= 7) {
-            monthSet.add(dateStr.slice(0, 7)); // YYYY-MM
+            monthSet.add(dateStr.slice(0, 7));
           }
         });
 
@@ -2500,7 +2393,6 @@
           monthFilterSelect.value = currentVal;
         }
 
-        // 월별 필터링 적용
         let filteredEndedPlans = endedPlans;
         if (window.selectedEndedMonthFilter !== 'all') {
           filteredEndedPlans = endedPlans.filter(p => (p.eventEndDate || p.startDate || "").startsWith(window.selectedEndedMonthFilter));
@@ -2610,7 +2502,6 @@
             </div>
           </div>
 
-          <!-- 이벤트 기간 눈에 띄는 뱃지 박스 -->
           <div class="flex items-center justify-between bg-amber-50/90 border border-amber-200 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-800">
             <span class="flex items-center gap-1.5 text-amber-900 text-[11px]">
               <i class="fa-solid fa-calendar-days text-orange-600"></i> 이벤트 기간
