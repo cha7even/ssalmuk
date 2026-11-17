@@ -114,9 +114,10 @@
           <span id="totalPlansCount" class="font-bold text-slate-600 flex items-center gap-1">
             <i class="fa-solid fa-layer-group text-slate-400"></i> 총 0개 요금제
           </span>
-          <span id="visitorCountBadge" class="hidden font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-full text-[11px] items-center gap-1">
-            <i class="fa-solid fa-eye text-[10px]"></i> 오늘 <span id="todayVisitorCountNum">0</span>명 · 누적 <span id="visitorCountNum">0</span>명
-          </span>
+          <button type="button" id="visitorCountBadge" onclick="toggleVisitorAnalyticsPanel()" class="hidden font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-2.5 py-0.5 rounded-full text-[11px] items-center gap-1 transition cursor-pointer">
+            <i class="fa-solid fa-eye text-[10px]"></i> 오늘 <span id="todayVisitorCountNum">0</span>명 (<span id="todayVisitorDiffText">0</span>) · 누적 <span id="visitorCountNum">0</span>명
+            <i id="visitorPanelChevron" class="fa-solid fa-chart-simple text-[10px] ml-0.5 text-orange-500"></i>
+          </button>
         </div>
         
         <div id="adminControlBar" class="flex items-center gap-2 flex-wrap justify-end hidden">
@@ -130,6 +131,50 @@
           <button onclick="openTextBackupModal()" class="px-2.5 py-1 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 rounded-lg text-[11px] font-bold flex items-center gap-1 transition">
             <i class="fa-solid fa-code text-orange-600"></i> 📝 텍스트
           </button>
+        </div>
+      </div>
+
+      <!-- 관리자 전용 방문자 유입 경로 & 일별 증감 추이 패널 -->
+      <div id="visitorAnalyticsPanel" class="hidden bg-slate-900 text-white rounded-2xl p-4 space-y-3.5 shadow-lg border border-slate-700 text-xs">
+        <div class="flex items-center justify-between border-b border-slate-700/80 pb-2">
+          <span class="font-black text-orange-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-chart-line"></i> 방문자 유입 경로 & 일별 증감 현황
+          </span>
+          <button type="button" onclick="toggleVisitorAnalyticsPanel()" class="text-slate-400 hover:text-white px-1.5 py-0.5 rounded-lg">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700">
+            <span class="text-[10px] text-slate-400 block font-semibold">오늘 방문자</span>
+            <strong id="analyticsTodayCount" class="text-sm font-black text-white">0명</strong>
+            <span id="analyticsTodayDiff" class="text-[10px] font-bold text-slate-400 block mt-0.5">어제 대비 0</span>
+          </div>
+          <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700">
+            <span class="text-[10px] text-slate-400 block font-semibold">어제 방문자</span>
+            <strong id="analyticsYesterdayCount" class="text-sm font-black text-slate-200">0명</strong>
+            <span class="text-[10px] text-slate-400 block mt-0.5">전일 기준</span>
+          </div>
+          <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700">
+            <span class="text-[10px] text-orange-300 block font-semibold">누적 방문자</span>
+            <strong id="analyticsTotalCount" class="text-sm font-black text-orange-400">0명</strong>
+            <span class="text-[10px] text-slate-400 block mt-0.5">전체 합계</span>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="text-[11px] font-bold text-slate-300 flex items-center gap-1">
+            <i class="fa-solid fa-compass text-emerald-400"></i> 유입 경로별 방문 현황 (Referrer)
+          </div>
+          <div id="analyticsReferrersList" class="bg-slate-800/70 rounded-xl border border-slate-700/80 p-2.5 space-y-1.5"></div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="text-[11px] font-bold text-slate-300 flex items-center gap-1">
+            <i class="fa-solid fa-calendar-week text-sky-400"></i> 최근 7일 방문자 증감 추이
+          </div>
+          <div id="analyticsDailyHistoryList" class="bg-slate-800/70 rounded-xl border border-slate-700/80 p-2.5 space-y-1.5"></div>
         </div>
       </div>
 
@@ -248,9 +293,10 @@
       <div class="space-y-1.5">
         <div id="lineStatusFilterChips" class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-[11px] font-bold">
           <button type="button" data-filter="all" onclick="setLineStatusFilter('all')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-slate-900 text-white shadow-2xs transition">전체</button>
+          <button type="button" data-filter="donald" onclick="setLineStatusFilter('donald')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50 transition">🦆 도날드 회선</button>
           <button type="button" data-filter="unreceived" onclick="setLineStatusFilter('unreceived')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition">🎁 이번달 미수령</button>
-          <button type="button" data-filter="ready30" onclick="setLineStatusFilter('ready30')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 transition">🚨 탈출 가능 (30일이내)</button>
-          <button type="button" data-filter="urgent" onclick="setLineStatusFilter('urgent')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition">🚨 탈출 준비</button>
+          <button type="button" data-filter="urgent" onclick="setLineStatusFilter('urgent')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition">⏰ 탈출 준비</button>
+          <button type="button" data-filter="ready" onclick="setLineStatusFilter('ready')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 transition">🚨 탈출 가능</button>
           <button type="button" data-filter="safe" onclick="setLineStatusFilter('safe')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">✅ 유지 중</button>
         </div>
 
@@ -732,48 +778,179 @@
       return 'bg-slate-700 text-white';
     };
 
+    window.getLocalTodayDateStr = function(offsetDays = 0) {
+      const d = new Date(Date.now() + offsetDays * 86400000);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    window.detectVisitorSource = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const utmSource = (urlParams.get("utm_source") || urlParams.get("ref") || "").trim();
+      if (utmSource) return `태그 (${utmSource})`;
+
+      const ref = (document.referrer || "").trim();
+      if (!ref) return "직접 접속 / 북마크";
+      try {
+        const host = new URL(ref).hostname.toLowerCase();
+        if (host.includes("naver.com")) return "네이버 (Naver)";
+        if (host.includes("google.")) return "구글 (Google)";
+        if (host.includes("daum.net") || host.includes("kakao.com")) return "다음 / 카카오톡";
+        if (host.includes("ppomppu")) return "뽐뿌 (Ppomppu)";
+        if (host.includes("clien.net")) return "클리앙 (Clien)";
+        if (host.includes("fmkorea")) return "에펨코리아";
+        if (host.includes("ruliweb")) return "루리웹";
+        if (host.includes("dcinside")) return "디시인사이드";
+        if (host.includes("threads.net") || host.includes("instagram.com")) return "인스타그램 / 스레드";
+        if (host.includes("youtube.com") || host.includes("youtu.be")) return "유튜브 (YouTube)";
+        if (host.includes("github.io")) return "GitHub 페이지";
+        return host;
+      } catch (e) {
+        return "외부 링크";
+      }
+    };
+
+    window.visitorAnalyticsState = {
+      today: 0,
+      yesterday: 0,
+      total: 0,
+      dailyHistory: {},
+      referrers: {}
+    };
+
+    window.toggleVisitorAnalyticsPanel = function() {
+      if (!window.isAdminMode) return;
+      const panel = document.getElementById("visitorAnalyticsPanel");
+      if (!panel) return;
+      panel.classList.toggle("hidden");
+      if (!panel.classList.contains("hidden")) {
+        window.renderVisitorAnalyticsPanel();
+      }
+    };
+
+    window.renderVisitorAnalyticsPanel = function() {
+      const st = window.visitorAnalyticsState;
+      const todayEl = document.getElementById("analyticsTodayCount");
+      const yesterdayEl = document.getElementById("analyticsYesterdayCount");
+      const totalEl = document.getElementById("analyticsTotalCount");
+      const diffEl = document.getElementById("analyticsTodayDiff");
+      const refListEl = document.getElementById("analyticsReferrersList");
+      const histListEl = document.getElementById("analyticsDailyHistoryList");
+
+      if (todayEl) todayEl.innerText = `${window.fmt(st.today)}명`;
+      if (yesterdayEl) yesterdayEl.innerText = `${window.fmt(st.yesterday)}명`;
+      if (totalEl) totalEl.innerText = `${window.fmt(st.total)}명`;
+
+      const diff = st.today - st.yesterday;
+      if (diffEl) {
+        if (diff > 0) {
+          diffEl.innerText = `어제 대비 ▲ +${window.fmt(diff)}명`;
+          diffEl.className = "text-[10px] font-bold text-emerald-400 block mt-0.5";
+        } else if (diff < 0) {
+          diffEl.innerText = `어제 대비 ▼ ${window.fmt(diff)}명`;
+          diffEl.className = "text-[10px] font-bold text-rose-400 block mt-0.5";
+        } else {
+          diffEl.innerText = "어제와 동일 (0)";
+          diffEl.className = "text-[10px] font-bold text-slate-400 block mt-0.5";
+        }
+      }
+
+      if (refListEl) {
+        const entries = Object.entries(st.referrers || {}).sort((a, b) => b[1] - a[1]);
+        const totalRefs = entries.reduce((acc, [, v]) => acc + v, 0) || 1;
+        if (entries.length === 0) {
+          refListEl.innerHTML = `<div class="text-[11px] text-slate-400 text-center py-2">기록된 유입 경로가 없습니다.</div>`;
+        } else {
+          refListEl.innerHTML = entries.slice(0, 8).map(([src, cnt]) => {
+            const pct = Math.round((cnt / totalRefs) * 100);
+            return `
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-[11px]">
+                  <span class="font-bold text-slate-200 truncate">${src}</span>
+                  <span class="font-black text-emerald-400 shrink-0">${window.fmt(cnt)}명 <span class="text-slate-400 font-normal">(${pct}%)</span></span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                  <div class="h-full bg-emerald-500 rounded-full" style="width: ${pct}%"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      if (histListEl) {
+        const days = [];
+        for (let i = 0; i < 7; i++) {
+          const dStr = window.getLocalTodayDateStr(-i);
+          const prevStr = window.getLocalTodayDateStr(-(i + 1));
+          const cnt = (st.dailyHistory && st.dailyHistory[dStr]) ? st.dailyHistory[dStr] : (i === 0 ? st.today : 0);
+          const prevCnt = (st.dailyHistory && st.dailyHistory[prevStr]) ? st.dailyHistory[prevStr] : 0;
+          const dDiff = cnt - prevCnt;
+          days.push({ dStr, cnt, dDiff, isToday: i === 0 });
+        }
+
+        histListEl.innerHTML = days.map(item => {
+          let diffBadge = `<span class="text-slate-400">0</span>`;
+          if (item.dDiff > 0) diffBadge = `<span class="text-emerald-400 font-bold">▲ +${window.fmt(item.dDiff)}</span>`;
+          else if (item.dDiff < 0) diffBadge = `<span class="text-rose-400 font-bold">▼ ${window.fmt(item.dDiff)}</span>`;
+
+          return `
+            <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-700/50 last:border-b-0">
+              <span class="font-bold ${item.isToday ? 'text-orange-300' : 'text-slate-300'}">${item.dStr} ${item.isToday ? '(오늘)' : ''}</span>
+              <div class="flex items-center gap-3">
+                <span class="font-black text-white">${window.fmt(item.cnt)}명</span>
+                <span class="w-14 text-right text-[10px]">${diffBadge}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    };
+
     async function initVisitorCounter() {
       const badge = document.getElementById("visitorCountBadge");
       const todayNumEl = document.getElementById("todayVisitorCountNum");
+      const diffTextEl = document.getElementById("todayVisitorDiffText");
       const totalNumEl = document.getElementById("visitorCountNum");
       if (!badge || !todayNumEl || !totalNumEl) return;
 
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = window.getLocalTodayDateStr(0);
+      const yesterdayStr = window.getLocalTodayDateStr(-1);
+      const sourceLabel = window.detectVisitorSource();
       const sessionKey = `ssalmuk_visited_session_${todayStr}`;
-      const localCountKey = "ssalmuk_visitor_count_v2";
-      const localDailyKey = "ssalmuk_daily_visitor_v2";
+      const localStatsKey = "ssalmuk_visitor_analytics_v3";
       const isNewSession = !sessionStorage.getItem(sessionKey);
 
-      let localTotal = parseInt(localStorage.getItem(localCountKey) || "0", 10);
-      if (isNaN(localTotal) || localTotal < 0) localTotal = 0;
-
-      let localDailyObj = { date: todayStr, count: 0 };
+      let localStats = {
+        total: 0,
+        dailyHistory: {},
+        referrers: {}
+      };
       try {
-        const parsedDaily = JSON.parse(localStorage.getItem(localDailyKey) || "null");
-        if (parsedDaily && parsedDaily.date === todayStr) {
-          localDailyObj.count = parseInt(parsedDaily.count, 10) || 0;
+        const parsed = JSON.parse(localStorage.getItem(localStatsKey) || "null");
+        if (parsed && typeof parsed === "object") {
+          localStats.total = parseInt(parsed.total, 10) || 0;
+          localStats.dailyHistory = parsed.dailyHistory || {};
+          localStats.referrers = parsed.referrers || {};
+        } else {
+          const legacyTotal = parseInt(localStorage.getItem("ssalmuk_visitor_count_v2") || "0", 10) || 0;
+          localStats.total = legacyTotal;
         }
       } catch (e) {}
 
       if (isNewSession) {
-        localTotal += 1;
-        localDailyObj.count += 1;
-        localStorage.setItem(localCountKey, String(localTotal));
-        localStorage.setItem(localDailyKey, JSON.stringify(localDailyObj));
+        localStats.total += 1;
+        localStats.dailyHistory[todayStr] = (localStats.dailyHistory[todayStr] || 0) + 1;
+        localStats.referrers[sourceLabel] = (localStats.referrers[sourceLabel] || 0) + 1;
         sessionStorage.setItem(sessionKey, "1");
       } else {
-        if (localTotal === 0) {
-          localTotal = 1;
-          localStorage.setItem(localCountKey, "1");
-        }
-        if (localDailyObj.count === 0) {
-          localDailyObj.count = 1;
-          localStorage.setItem(localDailyKey, JSON.stringify(localDailyObj));
-        }
+        if (localStats.total === 0) localStats.total = 1;
+        if (!localStats.dailyHistory[todayStr]) localStats.dailyHistory[todayStr] = 1;
       }
+      localStorage.setItem(localStatsKey, JSON.stringify(localStats));
 
-      let displayTotal = localTotal;
-      let displayToday = localDailyObj.count;
+      let displayTotal = localStats.total;
+      let displayDailyHistory = { ...localStats.dailyHistory };
+      let displayReferrers = { ...localStats.referrers };
 
       try {
         const statsRef = doc(db, "ssalmuk_stats", "visitor_count");
@@ -781,35 +958,85 @@
         if (snap.exists()) {
           const data = snap.data();
           const remoteTotal = data.count || 0;
-          const remoteDaily = (data.dailyDate === todayStr) ? (data.dailyCount || 0) : 0;
+          const remoteHistory = { ...(data.dailyHistory || {}) };
+          if (data.dailyDate && data.dailyCount && !remoteHistory[data.dailyDate]) {
+            remoteHistory[data.dailyDate] = data.dailyCount;
+          }
+          const remoteReferrers = { ...(data.referrers || {}) };
 
           if (isNewSession) {
-            displayTotal = Math.max(remoteTotal + 1, localTotal);
-            displayToday = Math.max(remoteDaily + 1, localDailyObj.count);
-            await updateDoc(statsRef, {
+            displayTotal = Math.max(remoteTotal + 1, localStats.total);
+            remoteHistory[todayStr] = Math.max((remoteHistory[todayStr] || 0) + 1, localStats.dailyHistory[todayStr] || 1);
+            remoteReferrers[sourceLabel] = Math.max((remoteReferrers[sourceLabel] || 0) + 1, localStats.referrers[sourceLabel] || 1);
+            displayDailyHistory = remoteHistory;
+            displayReferrers = remoteReferrers;
+
+            await setDoc(statsRef, {
               count: displayTotal,
               dailyDate: todayStr,
-              dailyCount: displayToday
-            });
+              dailyCount: displayDailyHistory[todayStr],
+              dailyHistory: displayDailyHistory,
+              referrers: displayReferrers
+            }, { merge: true });
           } else {
-            displayTotal = Math.max(remoteTotal, localTotal);
-            displayToday = Math.max(remoteDaily, localDailyObj.count);
+            displayTotal = Math.max(remoteTotal, localStats.total);
+            Object.keys(localStats.dailyHistory).forEach(k => {
+              remoteHistory[k] = Math.max(remoteHistory[k] || 0, localStats.dailyHistory[k] || 0);
+            });
+            Object.keys(localStats.referrers).forEach(k => {
+              remoteReferrers[k] = Math.max(remoteReferrers[k] || 0, localStats.referrers[k] || 0);
+            });
+            displayDailyHistory = remoteHistory;
+            displayReferrers = remoteReferrers;
           }
         } else {
           await setDoc(statsRef, {
             count: displayTotal,
             dailyDate: todayStr,
-            dailyCount: displayToday
+            dailyCount: displayDailyHistory[todayStr] || 1,
+            dailyHistory: displayDailyHistory,
+            referrers: displayReferrers
           });
         }
-        localStorage.setItem(localCountKey, String(displayTotal));
-        localStorage.setItem(localDailyKey, JSON.stringify({ date: todayStr, count: displayToday }));
+        localStorage.setItem(localStatsKey, JSON.stringify({
+          total: displayTotal,
+          dailyHistory: displayDailyHistory,
+          referrers: displayReferrers
+        }));
       } catch (e) {}
 
-      todayNumEl.innerText = window.fmt(displayToday);
+      const todayCount = displayDailyHistory[todayStr] || 1;
+      const yesterdayCount = displayDailyHistory[yesterdayStr] || 0;
+      const diff = todayCount - yesterdayCount;
+
+      window.visitorAnalyticsState = {
+        today: todayCount,
+        yesterday: yesterdayCount,
+        total: displayTotal,
+        dailyHistory: displayDailyHistory,
+        referrers: displayReferrers
+      };
+
+      todayNumEl.innerText = window.fmt(todayCount);
       totalNumEl.innerText = window.fmt(displayTotal);
-      badge.classList.remove("hidden");
-      badge.classList.add("inline-flex");
+      if (diffTextEl) {
+        if (diff > 0) {
+          diffTextEl.innerText = `▲+${window.fmt(diff)}`;
+          diffTextEl.className = "text-emerald-600 font-black";
+        } else if (diff < 0) {
+          diffTextEl.innerText = `▼${window.fmt(diff)}`;
+          diffTextEl.className = "text-rose-600 font-black";
+        } else {
+          diffTextEl.innerText = "0";
+          diffTextEl.className = "text-slate-500 font-bold";
+        }
+      }
+
+      if (window.isAdminMode) {
+        badge.classList.remove("hidden");
+        badge.classList.add("inline-flex");
+        window.renderVisitorAnalyticsPanel();
+      }
     }
 
     window.toggleEndedPlansList = function() {
@@ -1735,9 +1962,11 @@
         const isSelected = f === window.lineStatusFilter;
         if (isSelected) {
           btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-slate-900 text-white shadow-2xs transition";
+        } else if (f === "donald") {
+          btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50 transition";
         } else if (f === "unreceived") {
           btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition";
-        } else if (f === "ready30") {
+        } else if (f === "ready") {
           btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 transition";
         } else if (f === "urgent") {
           btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition";
@@ -1982,16 +2211,15 @@
 
         if (window.lineStatusFilter && window.lineStatusFilter !== "all") {
           const st = window.getLineStatusInfo(line.targetDate, line.activationDate);
-          if (window.lineStatusFilter === "unreceived") {
+          if (window.lineStatusFilter === "donald") {
+            const aliasLower = (line.alias || "").toLowerCase();
+            const memoLower = (line.memo || "").toLowerCase();
+            if (!aliasLower.includes("도날드") && !memoLower.includes("도날드")) return false;
+          } else if (window.lineStatusFilter === "unreceived") {
             const schedule = window.getLineMonthlyGiftSchedule(line);
             const curEntry = schedule.find(item => item.ymKey === currentYM);
             const hasUnreceived = curEntry && curEntry.giftObjects && curEntry.giftObjects.some(g => !g.isReceived);
             if (!hasUnreceived) return false;
-          } else if (window.lineStatusFilter === "ready30") {
-            if (!line.targetDate) return false;
-            const targetD = new Date(line.targetDate + "T00:00:00");
-            const diffDays = Math.ceil((targetD.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays > 30) return false;
           } else if (st.code !== window.lineStatusFilter) {
             return false;
           }
@@ -2419,7 +2647,7 @@
 
     function renderPlanCardHtml(plan, todayStr) {
       const opt = (plan.options && plan.options[0]) ? plan.options[0] : { name: '기본 요금제', price: 0 };
-      const actDate = plan.activationDate || plan.startDate || todayStr;
+      const actDate = todayStr;
       const month1Fee = window.getMonth1Fee(actDate, opt.price);
       
       let maxNetSoFar = -Infinity;
@@ -2521,7 +2749,7 @@
           </div>
 
           <div class="text-xs text-slate-500 flex justify-between items-center pt-0.5">
-            <span>개통일 기준: <strong class="text-slate-800 font-bold">${actDate}</strong></span>
+            <span>오늘 개통 기준: <strong class="text-slate-800 font-bold">${actDate}</strong></span>
             <span class="text-[11px] text-slate-400">자세히 보기 <i class="fa-solid fa-chevron-right text-[10px]"></i></span>
           </div>
 
@@ -2549,14 +2777,14 @@
       window.currentSelectedOptionIdx = 0;
       window.currentSelectedMonth = 10;
 
-      const actDate = plan.activationDate || plan.startDate || "-";
+      const actDate = window.getLocalTodayDateStr(0);
 
       const badgeEl = document.getElementById("detailCarrierBadge");
       badgeEl.innerText = plan.carrier || '알뜰폰';
       badgeEl.className = `shrink-0 px-3 py-1 text-xs font-black rounded-lg shadow-sm ${window.getCarrierBadgeStyle(plan.carrier)}`;
 
       document.getElementById("detailTitle").innerText = plan.title || '제목 없음';
-      document.getElementById("detailActivationDate").innerText = actDate;
+      document.getElementById("detailActivationDate").innerText = `${actDate} (오늘 방문일 기준)`;
       document.getElementById("detailCode").innerText = plan.code || "없음";
 
       if (plan.startDate && plan.eventEndDate) {
@@ -2617,7 +2845,7 @@
     function renderDetailGiftsList(plan) {
       const giftsContainer = document.getElementById("detailGiftsList");
       giftsContainer.innerHTML = "";
-      const actDate = plan.activationDate || plan.startDate || "2026-10-16";
+      const actDate = window.getLocalTodayDateStr(0);
 
       (plan.gifts || []).forEach(g => {
         const startM = g.month || 1;
@@ -2659,8 +2887,7 @@
 
     window.selectMonthTab = function(month) {
       window.currentSelectedMonth = month;
-      const plan = window.plansData.find(p => p.id === window.currentPlanId);
-      const actDate = plan ? (plan.activationDate || plan.startDate) : "2026-10-16";
+      const actDate = window.getLocalTodayDateStr(0);
       for (let m = 1; m <= 12; m++) {
         const btn = document.getElementById(`monthTab-${m}`);
         if (btn) {
@@ -2682,7 +2909,7 @@
 
       const opt = (plan.options && plan.options[window.currentSelectedOptionIdx]) ? plan.options[window.currentSelectedOptionIdx] : { name: '', price: 0 };
       const mCount = window.currentSelectedMonth;
-      const actDate = plan.activationDate || plan.startDate || "2026-10-16";
+      const actDate = window.getLocalTodayDateStr(0);
 
       document.getElementById("specPlanName").innerText = opt.name;
       document.getElementById("specPlanPrice").innerText = `${window.fmt(opt.price)}원 / 월`;
