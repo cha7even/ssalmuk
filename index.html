@@ -239,13 +239,12 @@
             <span class="text-[10px] text-emerald-400 block font-semibold">안전 유지 중</span>
             <strong id="dashSafeLines" class="text-base font-black text-emerald-400">0개</strong>
           </div>
-          <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-            <span class="text-[10px] text-amber-400 block font-semibold">탈출 준비 (30일이내)</span>
-            <strong id="dashUrgentLines" class="text-base font-black text-amber-400">0개</strong>
-          </div>
-          <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-            <span class="text-[10px] text-rose-400 block font-semibold">탈출 가능 (도래/경과)</span>
-            <strong id="dashReadyLines" class="text-base font-black text-rose-400">0개</strong>
+          <div class="col-span-2 bg-slate-800/80 p-3 rounded-xl border border-amber-500/40 flex items-center justify-between">
+            <div>
+              <span class="text-[11px] text-amber-300 block font-bold">⏰ 탈출 준비 (30일이내 · 도래/경과 포함)</span>
+              <span class="text-[10px] text-slate-400">탈출 예정일이 30일 이하로 남았거나 도래한 회선</span>
+            </div>
+            <strong id="dashUrgentLines" class="text-lg font-black text-amber-400">0개</strong>
           </div>
         </div>
 
@@ -292,16 +291,32 @@
       <!-- 상태별 빠른 필터 칩 -->
       <div class="space-y-1.5">
         <div id="lineStatusFilterChips" class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-[11px] font-bold">
-          <button type="button" data-filter="all" onclick="setLineStatusFilter('all')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-slate-900 text-white shadow-2xs transition">전체</button>
+          <button type="button" data-filter="all" onclick="setLineStatusFilter('all')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-slate-900 text-white shadow-2xs transition">전체 (보유중)</button>
           <button type="button" data-filter="donald" onclick="setLineStatusFilter('donald')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50 transition">🦆 도날드 회선</button>
           <button type="button" data-filter="unreceived" onclick="setLineStatusFilter('unreceived')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition">🎁 이번달 미수령</button>
-          <button type="button" data-filter="urgent" onclick="setLineStatusFilter('urgent')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition">⏰ 탈출 준비</button>
-          <button type="button" data-filter="ready" onclick="setLineStatusFilter('ready')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 transition">🚨 탈출 가능</button>
+          <button type="button" data-filter="urgent" onclick="setLineStatusFilter('urgent')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition">⏰ 탈출 준비 (30일이내)</button>
           <button type="button" data-filter="safe" onclick="setLineStatusFilter('safe')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition">✅ 유지 중</button>
+          <button type="button" data-filter="escaped" onclick="setLineStatusFilter('escaped')" class="line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 transition">🏁 탈출 완료 (<span id="escapedFilterCount">0</span>)</button>
         </div>
 
         <!-- 통신사별 필터 칩 -->
         <div id="lineCarrierFilterChips" class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-[11px] font-bold"></div>
+      </div>
+
+      <!-- 사은품 오전 9시 알림 설정 & 상태 바 -->
+      <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs">
+        <div class="min-w-0 flex-1">
+          <div class="font-black text-amber-950 flex items-center gap-1.5">
+            <i class="fa-solid fa-bell text-orange-600"></i>
+            <span>사은품 지급일 오전 9시 알람</span>
+            <span id="giftAlarmStatusBadge" class="px-2 py-0.5 text-[10px] rounded-full bg-slate-200 text-slate-700 font-bold">확인 중</span>
+          </div>
+          <p id="giftAlarmTodayPreview" class="text-[11px] text-amber-800 mt-0.5 truncate">오늘 수령 예정 사은품을 확인하고 있습니다...</p>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" onclick="testGiftMorningAlarm()" class="px-2.5 py-1.5 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-[11px] font-bold transition">미리알림</button>
+          <button type="button" id="btnEnableGiftAlarm" onclick="requestGiftAlarmPermission()" class="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow-2xs transition">알람 켜기</button>
+        </div>
       </div>
 
       <!-- 결과 카운트 + 정렬 드롭다운 + 간편보기 토글 -->
@@ -544,18 +559,21 @@
           </div>
 
           <div class="space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <label class="block font-bold text-slate-900">요금제</label>
-              <select id="planPresetQuickSelect" onchange="applyPresetToPlanModal(this.value)" class="max-w-[220px] px-2.5 py-1 bg-orange-50 border border-orange-200 text-orange-800 rounded-lg text-[11px] font-bold focus:outline-none focus:border-orange-500">
-                <option value="">📥 요금제 항목에서 불러오기...</option>
-              </select>
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <label class="block font-bold text-slate-900">요금제 및 개별 사은품 목록 <span class="text-[10px] text-orange-600 font-semibold">(요금제별 사은품 따로 입력)</span></label>
+              <div class="flex items-center gap-1.5">
+                <select id="planPresetQuickSelect" onchange="applyPresetToPlanModal(this.value)" class="max-w-[175px] px-2 py-1 bg-orange-50 border border-orange-200 text-orange-800 rounded-lg text-[11px] font-bold focus:outline-none focus:border-orange-500">
+                  <option value="">📥 항목 불러오기...</option>
+                </select>
+                <button type="button" onclick="addFormOptionRow('', '', null)" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold text-[11px] transition shrink-0">+ 요금제 추가</button>
+              </div>
             </div>
-            <div id="formOptionsContainer" class="space-y-2"></div>
+            <div id="formOptionsContainer" class="space-y-3"></div>
           </div>
 
-          <div class="space-y-2">
+          <div id="legacyCommonGiftsSection" class="space-y-2 hidden">
             <div class="flex items-center justify-between">
-              <label class="font-bold text-slate-900">사은품 지급 항목</label>
+              <label class="font-bold text-slate-900">공통 사은품 지급 항목 (기존 데이터 호환)</label>
               <button type="button" onclick="addFormGiftRow()" class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg font-bold text-[11px] hover:bg-orange-100 transition">+ 사은품 추가</button>
             </div>
             <div id="formGiftsContainer" class="space-y-2"></div>
@@ -728,6 +746,31 @@
     </div>
   </div>
 
+  <!-- GIFT ALARM POPUP MODAL (오전 9시 사은품 지급일 알람 모달) -->
+  <div id="giftAlarmModal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl border-2 border-orange-400 text-xs">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-base animate-bounce">
+            <i class="fa-solid fa-bell"></i>
+          </span>
+          <div>
+            <h3 class="font-black text-sm text-slate-900">오늘의 사은품 수령 알람 (오전 9시)</h3>
+            <p id="giftAlarmModalDateText" class="text-[11px] text-slate-500 font-semibold">-</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeGiftAlarmModal()" class="w-7 h-7 rounded-full hover:bg-slate-100 text-slate-500 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="giftAlarmModalList" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar"></div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <button type="button" onclick="closeGiftAlarmModal(); switchMainTab('lines'); setLineStatusFilter('unreceived');" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition">회선 관리자에서 수령 체크하기</button>
+        <button type="button" onclick="closeGiftAlarmModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs">확인</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase Integration Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -767,6 +810,215 @@
     window.isLineCompactMode = false;
     window.expandedLineIds = {};
     window.tempRawGifts = null;
+    window.mainCardSelectedOptionMap = {};
+    window.giftAlarmTimerId = null;
+
+    window.getTodayDueGiftsList = function() {
+      const today = new Date();
+      const todayYM = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+      const todayDay = today.getDate();
+      const dueList = [];
+
+      (window.linesData || []).forEach(line => {
+        if (line.isEscaped) return;
+        const schedule = window.getLineMonthlyGiftSchedule(line);
+        const curEntry = schedule.find(item => item.ymKey === todayYM);
+        if (!curEntry || !curEntry.giftObjects) return;
+
+        curEntry.giftObjects.forEach(g => {
+          if (g.isReceived) return;
+          const rDay = parseInt(g.receiveDay, 10);
+          if (!isNaN(rDay) && rDay === todayDay) {
+            dueList.push({
+              lineId: line.id,
+              alias: line.alias,
+              carrier: line.carrier || '알뜰폰',
+              planName: line.planName || '',
+              giftName: g.name,
+              val: g.val || 0,
+              receiveDay: rDay
+            });
+          }
+        });
+      });
+      return dueList;
+    };
+
+    window.playGiftAlarmChime = function() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const notes = [587.33, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.16);
+          gain.gain.setValueAtTime(0.15, ctx.currentTime + idx * 0.16);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.16 + 0.45);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.16);
+          osc.stop(ctx.currentTime + idx * 0.16 + 0.46);
+        });
+      } catch (e) {}
+    };
+
+    window.showGiftAlarmModal = function(dueList, isManualTest = false) {
+      const modal = document.getElementById("giftAlarmModal");
+      const dateEl = document.getElementById("giftAlarmModalDateText");
+      const listEl = document.getElementById("giftAlarmModalList");
+      if (!modal || !listEl) return;
+
+      const todayStr = window.getLocalTodayDateStr(0);
+      if (dateEl) dateEl.innerText = `${todayStr} 기준 수령 예정 사은품`;
+
+      if (!dueList || dueList.length === 0) {
+        listEl.innerHTML = `
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center text-slate-600 space-y-1">
+            <div class="font-bold text-slate-800">오늘(${todayStr}) 지급 예정인 미수령 사은품이 없습니다.</div>
+            <p class="text-[11px] text-slate-500">사은품 지급일(매월 N일) 당일 오전 9시가 되면 자동으로 알려드립니다.</p>
+          </div>
+        `;
+      } else {
+        listEl.innerHTML = dueList.map(item => `
+          <div class="p-3 bg-orange-50/80 border border-orange-200 rounded-2xl flex items-center justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <span class="px-2 py-0.5 text-[10px] font-black rounded ${window.getCarrierBadgeStyle(item.carrier)}">${item.carrier}</span>
+                <strong class="text-xs font-black text-slate-900 truncate">${item.alias}</strong>
+              </div>
+              <div class="text-xs font-bold text-slate-800 mt-1">${item.giftName}</div>
+              <div class="text-[10px] text-slate-500">지급일: 매월 ${item.receiveDay}일</div>
+            </div>
+            <span class="font-black text-orange-600 text-sm shrink-0">+${window.fmt(item.val)}원</span>
+          </div>
+        `).join('');
+      }
+
+      modal.classList.remove("hidden");
+      if (dueList.length > 0 || isManualTest) {
+        window.playGiftAlarmChime();
+      }
+    };
+
+    window.closeGiftAlarmModal = function() {
+      const modal = document.getElementById("giftAlarmModal");
+      if (modal) modal.classList.add("hidden");
+    };
+
+    window.triggerNineAmGiftNotification = function(forceShow = false) {
+      const dueList = window.getTodayDueGiftsList();
+      const todayStr = window.getLocalTodayDateStr(0);
+      const notifiedKey = `ssalmuk_gift_alarm_notified_${todayStr}`;
+
+      if (!forceShow && localStorage.getItem(notifiedKey) === "1") return;
+      if (dueList.length === 0 && !forceShow) return;
+
+      if (dueList.length > 0) {
+        localStorage.setItem(notifiedKey, "1");
+        const totalAmt = dueList.reduce((acc, cur) => acc + cur.val, 0);
+        const bodyText = dueList.map(d => `[${d.alias}] ${d.giftName} (+${window.fmt(d.val)}원)`).join('\n');
+
+        if ("Notification" in window && Notification.permission === "granted") {
+          try {
+            const notif = new Notification(`🎁 오늘 사은품 지급일! 총 +${window.fmt(totalAmt)}원`, {
+              body: bodyText,
+              tag: notifiedKey
+            });
+            notif.onclick = function() {
+              window.focus();
+              window.switchMainTab('lines');
+              window.setLineStatusFilter('unreceived');
+              notif.close();
+            };
+          } catch (e) {}
+        }
+      }
+
+      window.showGiftAlarmModal(dueList, forceShow);
+    };
+
+    window.testGiftMorningAlarm = function() {
+      window.triggerNineAmGiftNotification(true);
+    };
+
+    window.requestGiftAlarmPermission = async function() {
+      localStorage.setItem("ssalmuk_gift_alarm_enabled", "1");
+      if ("Notification" in window) {
+        try {
+          await Notification.requestPermission();
+        } catch (e) {}
+      }
+      window.updateGiftAlarmUI();
+      window.scheduleNineAmGiftAlarm();
+      window.showGiftAlarmModal(window.getTodayDueGiftsList(), true);
+    };
+
+    window.updateGiftAlarmUI = function() {
+      const badgeEl = document.getElementById("giftAlarmStatusBadge");
+      const previewEl = document.getElementById("giftAlarmTodayPreview");
+      const btnEl = document.getElementById("btnEnableGiftAlarm");
+      const dueList = window.getTodayDueGiftsList();
+
+      if (previewEl) {
+        if (dueList.length > 0) {
+          const sum = dueList.reduce((a, b) => a + b.val, 0);
+          previewEl.innerHTML = `<strong class="text-orange-700">오늘 수령 예정 ${dueList.length}건 (+${window.fmt(sum)}원)</strong>이 있습니다!`;
+        } else {
+          previewEl.innerText = "오늘 수령 예정인 미수령 사은품이 없습니다. (지급일 오전 9시 자동 알림)";
+        }
+      }
+
+      const isEnabled = localStorage.getItem("ssalmuk_gift_alarm_enabled") !== "0";
+      const notifGranted = ("Notification" in window) && Notification.permission === "granted";
+
+      if (badgeEl) {
+        if (notifGranted) {
+          badgeEl.innerText = "ON (푸시+팝업)";
+          badgeEl.className = "px-2 py-0.5 text-[10px] rounded-full bg-emerald-100 text-emerald-800 font-black";
+        } else if (isEnabled) {
+          badgeEl.innerText = "ON (앱내 팝업)";
+          badgeEl.className = "px-2 py-0.5 text-[10px] rounded-full bg-orange-100 text-orange-800 font-black";
+        } else {
+          badgeEl.innerText = "OFF";
+          badgeEl.className = "px-2 py-0.5 text-[10px] rounded-full bg-slate-200 text-slate-600 font-bold";
+        }
+      }
+
+      if (btnEl) {
+        btnEl.innerText = notifGranted ? "알람 활성됨" : "푸시 허용";
+      }
+    };
+
+    window.scheduleNineAmGiftAlarm = function() {
+      if (window.giftAlarmTimerId) {
+        clearTimeout(window.giftAlarmTimerId);
+        window.giftAlarmTimerId = null;
+      }
+
+      window.updateGiftAlarmUI();
+      if (!window.isAdminMode) return;
+
+      const now = new Date();
+      const nineAmToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0, 0);
+
+      if (now.getTime() >= nineAmToday.getTime()) {
+        window.triggerNineAmGiftNotification(false);
+        const nineAmTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 0, 0, 0);
+        window.giftAlarmTimerId = setTimeout(() => {
+          window.triggerNineAmGiftNotification(false);
+          window.scheduleNineAmGiftAlarm();
+        }, nineAmTomorrow.getTime() - now.getTime());
+      } else {
+        const delayMs = nineAmToday.getTime() - now.getTime();
+        window.giftAlarmTimerId = setTimeout(() => {
+          window.triggerNineAmGiftNotification(false);
+          window.scheduleNineAmGiftAlarm();
+        }, delayMs);
+      }
+    };
 
     window.getCarrierBadgeStyle = function(carrier) {
       const c = (carrier || '').toUpperCase();
@@ -1586,6 +1838,16 @@
       }
     };
 
+    window.getPlanOptionGifts = function(plan, optIdx = 0) {
+      if (!plan) return [];
+      const optionsList = (plan.options && plan.options.length > 0) ? plan.options : [];
+      const opt = optionsList[optIdx];
+      if (opt && Array.isArray(opt.gifts) && opt.gifts.length > 0) {
+        return opt.gifts;
+      }
+      return Array.isArray(plan.gifts) ? plan.gifts : [];
+    };
+
     window.openLineModalFromPlan = function(event, planId) {
       if (event) event.stopPropagation();
       if (!window.isAdminMode) return;
@@ -1594,10 +1856,10 @@
 
       const optIdx = (window.currentPlanId === planId && !document.getElementById("detailScreen").classList.contains("hidden"))
         ? window.currentSelectedOptionIdx
-        : 0;
+        : (window.mainCardSelectedOptionMap[planId] || 0);
       const opt = (plan.options && plan.options[optIdx]) ? plan.options[optIdx] : { name: "기본 요금제", price: 0 };
 
-      const giftsList = plan.gifts || [];
+      const giftsList = window.getPlanOptionGifts(plan, optIdx);
       const defaultDayObj = giftsList.find(g => g.receiveDay);
       const defaultDay = defaultDayObj ? defaultDayObj.receiveDay : "";
 
@@ -1795,14 +2057,16 @@
         monthlyFee: parseInt(document.getElementById("lineMonthlyFee").value, 10) || 0,
         giftReceiveDay: existingLine ? (existingLine.giftReceiveDay || "") : "",
         giftReceiveDate: existingLine ? (existingLine.giftReceiveDate || "") : "",
-        activationDate: document.getElementById("lineActivationDate").value,
-        targetDate: document.getElementById("lineTargetDate").value,
+        activationDate: document.getElementById("lineActivationDate").value || "",
+        targetDate: document.getElementById("lineTargetDate").value || "",
         giftsSummary: generatedSummary,
         rawGifts: parsedGifts,
-        receivedGifts: existingLine && existingLine.receivedGifts ? existingLine.receivedGifts : {},
-        giftDates: existingLine && existingLine.giftDates ? existingLine.giftDates : {},
+        receivedGifts: existingLine ? (existingLine.receivedGifts || {}) : {},
+        giftDates: existingLine ? (existingLine.giftDates || {}) : {},
         giftDays: updatedGiftDays,
         memo: document.getElementById("lineMemo").value.trim(),
+        isEscaped: existingLine ? !!existingLine.isEscaped : false,
+        ...(existingLine && existingLine.escapedDate ? { escapedDate: existingLine.escapedDate } : {})
       };
 
       if (editId) {
@@ -1831,7 +2095,26 @@
       }
     }
 
-    window.getLineStatusInfo = function(targetDateStr, activationDateStr) {
+    window.toggleLineEscaped = async function(id) {
+      if (!window.isAdminMode) return;
+      const line = window.linesData.find(l => l.id === id);
+      if (!line) return;
+      if (!line.isEscaped) {
+        line.isEscaped = true;
+        line.escapedDate = window.getLocalTodayDateStr(0);
+      } else {
+        line.isEscaped = false;
+        delete line.escapedDate;
+      }
+      await window.saveLinesStorage();
+      window.updateGiftAlarmUI();
+      renderLinesList();
+    }
+
+    window.getLineStatusInfo = function(targetDateStr, activationDateStr, isEscaped = false) {
+      if (isEscaped) {
+        return { text: '🏁 탈출 완료', class: 'bg-purple-100 text-purple-800 font-black border border-purple-200', code: 'escaped' };
+      }
       const today = new Date();
       today.setHours(0,0,0,0);
 
@@ -1859,9 +2142,9 @@
         const prefix = elapsedText ? `${elapsedText} · ` : '';
         return { text: `${prefix}탈출 준비 (D-${diffDays})`, class: 'bg-amber-100 text-amber-800 font-bold', code: 'urgent' };
       } else if (diffDays === 0) {
-        return { text: `${elapsedText ? elapsedText + ' · ' : ''}D-DAY 오늘 탈출가능!`, class: 'bg-rose-600 text-white font-black animate-pulse', code: 'ready' };
+        return { text: `${elapsedText ? elapsedText + ' · ' : ''}탈출 준비 (D-DAY)`, class: 'bg-rose-600 text-white font-black animate-pulse', code: 'urgent' };
       } else {
-        return { text: `${elapsedText ? elapsedText + ' · ' : ''}탈출 가능 (+${Math.abs(diffDays)}일 경과)`, class: 'bg-rose-100 text-rose-700 font-bold', code: 'ready' };
+        return { text: `${elapsedText ? elapsedText + ' · ' : ''}탈출 준비 (+${Math.abs(diffDays)}일 도래)`, class: 'bg-rose-100 text-rose-700 font-bold', code: 'urgent' };
       }
     }
 
@@ -1966,10 +2249,10 @@
           btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50 transition";
         } else if (f === "unreceived") {
           btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition";
-        } else if (f === "ready") {
-          btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 transition";
         } else if (f === "urgent") {
           btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-amber-800 border border-amber-200 hover:bg-amber-50 transition";
+        } else if (f === "escaped") {
+          btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 transition";
         } else {
           btn.className = "line-filter-chip shrink-0 px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition";
         }
@@ -2097,7 +2380,7 @@
       const container = document.getElementById("linesList");
       if (!container) return;
       
-      document.getElementById("totalLinesCount").innerText = `총 ${window.linesData.length}개 회선 등록됨`;
+      window.updateGiftAlarmUI();
       container.innerHTML = "";
 
       const today = new Date();
@@ -2110,8 +2393,12 @@
         el.innerText = monthDisplayLabel;
       });
 
-      let totalLines = window.linesData.length;
-      let readyLines = 0;
+      const activeLines = window.linesData.filter(l => !l.isEscaped);
+      const escapedLines = window.linesData.filter(l => !!l.isEscaped);
+      const escapedCountEl = document.getElementById("escapedFilterCount");
+      if (escapedCountEl) escapedCountEl.innerText = escapedLines.length;
+
+      let totalLines = activeLines.length;
       let urgentLines = 0;
       let safeLines = 0;
       let totalFee = 0;
@@ -2122,7 +2409,7 @@
       const todayMidnight = new Date();
       todayMidnight.setHours(0, 0, 0, 0);
 
-      window.linesData.forEach(line => {
+      activeLines.forEach(line => {
         totalFee += (line.monthlyFee || 0);
         const lineMonthGift = window.calculateLineGiftValForCurrentMonth(line);
         totalGiftValForCurrentMonth += lineMonthGift;
@@ -2139,9 +2426,8 @@
           });
         }
 
-        const st = window.getLineStatusInfo(line.targetDate, line.activationDate);
-        if (st.code === 'ready') readyLines++;
-        else if (st.code === 'urgent') urgentLines++;
+        const st = window.getLineStatusInfo(line.targetDate, line.activationDate, false);
+        if (st.code === 'urgent' || st.code === 'ready') urgentLines++;
         else if (st.code === 'safe') safeLines++;
       });
 
@@ -2150,7 +2436,6 @@
       document.getElementById("dashTotalLines").innerText = `${totalLines}개`;
       document.getElementById("dashSafeLines").innerText = `${safeLines}개`;
       document.getElementById("dashUrgentLines").innerText = `${urgentLines}개`;
-      document.getElementById("dashReadyLines").innerText = `${readyLines}개`;
       
       document.getElementById("dashTotalFee").innerText = `${window.fmt(totalFee)}원`;
       document.getElementById("dashTotalGiftVal").innerText = `+${window.fmt(totalGiftValForCurrentMonth)}원`;
@@ -2169,10 +2454,11 @@
         netCostEl.className = "text-sm sm:text-base font-black text-rose-400";
       }
 
+      const sourcePoolForCarrier = window.lineStatusFilter === "escaped" ? escapedLines : activeLines;
       const carrierChipsContainer = document.getElementById("lineCarrierFilterChips");
       if (carrierChipsContainer) {
         const carrierCounts = {};
-        window.linesData.forEach(l => {
+        sourcePoolForCarrier.forEach(l => {
           const cName = (l.carrier || "알뜰폰").trim();
           carrierCounts[cName] = (carrierCounts[cName] || 0) + 1;
         });
@@ -2194,6 +2480,13 @@
 
       const query = (window.lineSearchQuery || "").toLowerCase();
       let filteredLines = window.linesData.filter(line => {
+        const isLineEscaped = !!line.isEscaped;
+        if (window.lineStatusFilter === "escaped") {
+          if (!isLineEscaped) return false;
+        } else {
+          if (isLineEscaped) return false;
+        }
+
         if (query) {
           const alias = (line.alias || "").toLowerCase();
           const carrier = (line.carrier || "").toLowerCase();
@@ -2209,8 +2502,8 @@
           if (cName !== window.lineCarrierFilter) return false;
         }
 
-        if (window.lineStatusFilter && window.lineStatusFilter !== "all") {
-          const st = window.getLineStatusInfo(line.targetDate, line.activationDate);
+        if (window.lineStatusFilter && window.lineStatusFilter !== "all" && window.lineStatusFilter !== "escaped") {
+          const st = window.getLineStatusInfo(line.targetDate, line.activationDate, isLineEscaped);
           if (window.lineStatusFilter === "donald") {
             const aliasLower = (line.alias || "").toLowerCase();
             const memoLower = (line.memo || "").toLowerCase();
@@ -2243,12 +2536,16 @@
         });
       }
 
-      const isFiltered = query || window.lineStatusFilter !== "all" || window.lineCarrierFilter !== "all";
-      document.getElementById("totalLinesCount").innerText = isFiltered
-        ? `필터 결과 ${filteredLines.length}개 / 전체 ${totalLines}개 회선`
-        : `총 ${totalLines}개 회선 등록됨`;
+      const isFiltered = query || (window.lineStatusFilter !== "all" && window.lineStatusFilter !== "escaped") || window.lineCarrierFilter !== "all";
+      if (window.lineStatusFilter === "escaped") {
+        document.getElementById("totalLinesCount").innerText = `탈출 완료 회선 ${filteredLines.length}개`;
+      } else {
+        document.getElementById("totalLinesCount").innerText = isFiltered
+          ? `필터 결과 ${filteredLines.length}개 / 보유 ${totalLines}개 회선`
+          : `보유 ${totalLines}개 회선 등록됨 (탈출완료 ${escapedLines.length}개)`;
+      }
 
-      if (totalLines === 0) {
+      if (window.linesData.length === 0) {
         container.innerHTML = `
           <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-xs space-y-2 shadow-sm">
             <i class="fa-solid fa-mobile-screen text-3xl text-slate-300"></i>
@@ -2260,18 +2557,20 @@
       }
 
       if (filteredLines.length === 0) {
+        const emptyTitle = window.lineStatusFilter === "escaped" ? "탈출 완료된 회선이 없습니다." : "조건에 일치하는 회선이 없습니다.";
         container.innerHTML = `
           <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-xs space-y-2 shadow-sm">
             <i class="fa-solid fa-magnifying-glass text-2xl text-slate-300"></i>
-            <div class="font-bold text-slate-800">조건에 일치하는 회선이 없습니다.</div>
-            <button type="button" onclick="clearLineSearch(); setLineStatusFilter('all'); setLineCarrierFilter('all');" class="mt-1 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[11px]">필터/검색 전체 초기화</button>
+            <div class="font-bold text-slate-800">${emptyTitle}</div>
+            ${window.lineStatusFilter !== "escaped" ? `<button type="button" onclick="clearLineSearch(); setLineStatusFilter('all'); setLineCarrierFilter('all');" class="mt-1 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[11px]">필터/검색 전체 초기화</button>` : ''}
           </div>
         `;
         return;
       }
 
       filteredLines.forEach(line => {
-        const statusInfo = window.getLineStatusInfo(line.targetDate, line.activationDate);
+        const isEscaped = !!line.isEscaped;
+        const statusInfo = window.getLineStatusInfo(line.targetDate, line.activationDate, isEscaped);
         const carrierBadgeStyle = window.getCarrierBadgeStyle(line.carrier);
         const thisMonthGift = window.calculateLineGiftValForCurrentMonth(line);
         const monthlySchedule = window.getLineMonthlyGiftSchedule(line);
@@ -2428,12 +2727,13 @@
         }
 
         container.innerHTML += `
-          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:border-slate-300 transition space-y-3">
+          <div class="${isEscaped ? 'bg-slate-50/90 border-purple-200' : 'bg-white border-slate-200 hover:border-slate-300'} rounded-2xl border p-4 shadow-sm transition space-y-3">
             <div onclick="toggleSingleLineExpand('${line.id}')" class="${window.isLineCompactMode ? 'cursor-pointer' : ''}">
               <div class="flex items-center justify-between gap-2 mb-2">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span class="px-2.5 py-1 text-xs font-black rounded-lg shadow-sm ${carrierBadgeStyle}">${line.carrier || '알뜰폰'}</span>
                   <span class="px-2.5 py-1 text-[10px] rounded-lg ${statusInfo.class}">${statusInfo.text}</span>
+                  ${isEscaped && line.escapedDate ? `<span class="text-[10px] text-purple-700 font-bold">(${line.escapedDate} 탈출)</span>` : ''}
                 </div>
                 ${window.isLineCompactMode ? `<i class="fa-solid fa-chevron-up text-slate-400 text-xs"></i>` : ''}
               </div>
@@ -2469,17 +2769,17 @@
             </div>
 
             ${scheduleHtml}
-
-            ${line.memo ? `
-              <div class="text-[11px] text-slate-600 bg-amber-50/70 p-2.5 rounded-xl border border-amber-200">
-                <strong class="text-amber-900 block text-[10px] mb-0.5 font-bold"><i class="fa-regular fa-sticky-note mr-1"></i>메모/특이사항</strong>
-                <div>${line.memo}</div>
+            <div class="flex justify-between items-center gap-1.5 pt-1 border-t border-slate-100 text-xs">
+              <div>
+                ${isEscaped
+                  ? `<button type="button" onclick="toggleLineEscaped('${line.id}')" class="px-3 py-1 bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold rounded-lg transition border border-purple-200 flex items-center gap-1"><i class="fa-solid fa-rotate-left"></i> 보유회선 복구</button>`
+                  : `<button type="button" onclick="toggleLineEscaped('${line.id}')" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg transition border border-indigo-200 flex items-center gap-1"><i class="fa-solid fa-person-running"></i> 탈출</button>`
+                }
               </div>
-            ` : ''}
-
-            <div class="flex justify-end gap-1.5 pt-1 border-t border-slate-100 text-xs">
-              <button onclick="openLineModal('${line.id}')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition border border-slate-200">수정</button>
-              <button onclick="deleteLine('${line.id}')" class="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-lg transition border border-slate-200">삭제</button>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openLineModal('${line.id}')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition border border-slate-200">수정</button>
+                <button onclick="deleteLine('${line.id}')" class="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-lg transition border border-slate-200">삭제</button>
+              </div>
             </div>
           </div>
         `;
@@ -2645,8 +2945,17 @@
       }
     }
 
+    window.selectMainCardOption = function(event, planId, optIdx) {
+      if (event) event.stopPropagation();
+      window.mainCardSelectedOptionMap[planId] = parseInt(optIdx, 10) || 0;
+      renderMainList();
+    };
+
     function renderPlanCardHtml(plan, todayStr) {
-      const opt = (plan.options && plan.options[0]) ? plan.options[0] : { name: '기본 요금제', price: 0 };
+      const optionsList = (plan.options && plan.options.length > 0) ? plan.options : [{ name: '기본 요금제', price: 0 }];
+      const selectedOptIdx = Math.min(optionsList.length - 1, Math.max(0, window.mainCardSelectedOptionMap[plan.id] || 0));
+      const opt = optionsList[selectedOptIdx];
+      const activeGiftsList = window.getPlanOptionGifts(plan, selectedOptIdx);
       const actDate = todayStr;
       const month1Fee = window.getMonth1Fee(actDate, opt.price);
       
@@ -2660,7 +2969,7 @@
         tempBillTotal += mFee;
 
         let mGift = 0;
-        (plan.gifts || []).forEach(g => {
+        activeGiftsList.forEach(g => {
           const startM = g.month || 1;
           const endM = g.endMonth || (g.isMonthly ? 12 : startM);
           if (g.isMonthly) {
@@ -2714,7 +3023,42 @@
       }
 
       const carrierBadgeStyle = window.getCarrierBadgeStyle(plan.carrier);
-      const extraOptionsCount = (plan.options && plan.options.length > 1) ? plan.options.length - 1 : 0;
+      const hasMultipleOptions = optionsList.length > 1;
+
+      const optionsDisplayHtml = hasMultipleOptions
+        ? `
+          <div class="space-y-1.5 pt-2 border-t border-slate-100" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
+              <span><i class="fa-solid fa-layer-group text-orange-500 mr-1"></i>요금제 선택 (${optionsList.length}종)</span>
+              <span class="text-orange-600 font-black">클릭하여 순이익 비교</span>
+            </div>
+            <div class="grid grid-cols-1 gap-1.5">
+              ${optionsList.map((o, idx) => {
+                const isSel = idx === selectedOptIdx;
+                return `
+                  <button type="button" onclick="selectMainCardOption(event, '${plan.id}', ${idx})" class="w-full text-left px-3 py-2 rounded-xl border text-xs font-bold flex items-center justify-between gap-2 transition ${isSel ? 'bg-orange-50 border-orange-400 text-slate-900 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'}">
+                    <span class="flex items-center gap-1.5 min-w-0 flex-1">
+                      <i class="fa-solid ${isSel ? 'fa-circle-check text-orange-600' : 'fa-sim-card text-slate-400'} text-[11px] shrink-0"></i>
+                      <span class="truncate">${o.name}</span>
+                    </span>
+                    <span class="shrink-0 font-black ${isSel ? 'text-orange-600' : 'text-slate-700'}">월 ${window.fmt(o.price)}원</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `
+        : `
+          <div class="text-xs font-bold text-slate-700 flex justify-between items-center gap-2 pt-2 border-t border-slate-100">
+            <div class="flex items-center gap-1.5 min-w-0 flex-1">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-800 text-xs font-black rounded-lg truncate">
+                <i class="fa-solid fa-sim-card text-orange-500 text-[11px] shrink-0"></i>
+                <span class="truncate">${opt.name}</span>
+              </span>
+            </div>
+            <span class="shrink-0 text-orange-600 font-black text-sm">월 ${window.fmt(opt.price)}원</span>
+          </div>
+        `;
 
       return `
         <div onclick="showDetailScreen('${plan.id}')" class="${cardOpacityClass} rounded-2xl border p-4 shadow-ssal transition cursor-pointer space-y-3">
@@ -2753,16 +3097,7 @@
             <span class="text-[11px] text-slate-400">자세히 보기 <i class="fa-solid fa-chevron-right text-[10px]"></i></span>
           </div>
 
-          <div class="text-xs font-bold text-slate-700 flex justify-between items-center gap-2 pt-2 border-t border-slate-100">
-            <div class="flex items-center gap-1.5 min-w-0 flex-1">
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-800 text-xs font-black rounded-lg truncate">
-                <i class="fa-solid fa-sim-card text-orange-500 text-[11px] shrink-0"></i>
-                <span class="truncate">${opt.name}</span>
-              </span>
-              ${extraOptionsCount > 0 ? `<span class="shrink-0 px-1.5 py-0.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-md text-[10px] font-extrabold">+${extraOptionsCount}개</span>` : ''}
-            </div>
-            <span class="shrink-0 text-orange-600 font-black text-sm">월 ${window.fmt(opt.price)}원</span>
-          </div>
+          ${optionsDisplayHtml}
 
           ${adminStatusButtonsHtml}
         </div>
@@ -2774,7 +3109,7 @@
       const plan = window.plansData.find(p => p.id === planId);
       if (!plan) return;
 
-      window.currentSelectedOptionIdx = 0;
+      window.currentSelectedOptionIdx = window.mainCardSelectedOptionMap[planId] || 0;
       window.currentSelectedMonth = 10;
 
       const actDate = window.getLocalTodayDateStr(0);
@@ -2814,6 +3149,8 @@
         optSelect.innerHTML += optionHtml;
         optSelect2.innerHTML += optionHtml;
       });
+      optSelect.value = window.currentSelectedOptionIdx;
+      optSelect2.value = window.currentSelectedOptionIdx;
 
       renderDetailGiftsList(plan);
 
@@ -2846,8 +3183,9 @@
       const giftsContainer = document.getElementById("detailGiftsList");
       giftsContainer.innerHTML = "";
       const actDate = window.getLocalTodayDateStr(0);
+      const activeGiftsList = window.getPlanOptionGifts(plan, window.currentSelectedOptionIdx);
 
-      (plan.gifts || []).forEach(g => {
+      activeGiftsList.forEach(g => {
         const startM = g.month || 1;
         const endM = g.endMonth || (g.isMonthly ? 12 : startM);
         const startMonthLabel = window.getMonthLabel(actDate, startM);
@@ -2876,6 +3214,16 @@
     window.onDetailOptionChange = function() {
       window.currentSelectedOptionIdx = parseInt(document.getElementById("detailSubPlanSelect").value, 10);
       document.getElementById("detailSubPlanSelect2").value = window.currentSelectedOptionIdx;
+      const plan = window.plansData.find(p => p.id === window.currentPlanId);
+      if (plan) renderDetailGiftsList(plan);
+      updateCalculations();
+    }
+
+    window.syncOptionSelect = function(val) {
+      window.currentSelectedOptionIdx = parseInt(val, 10);
+      document.getElementById("detailSubPlanSelect").value = window.currentSelectedOptionIdx;
+      const plan = window.plansData.find(p => p.id === window.currentPlanId);
+      if (plan) renderDetailGiftsList(plan);
       updateCalculations();
     }
 
@@ -2908,6 +3256,7 @@
       if (!plan) return;
 
       const opt = (plan.options && plan.options[window.currentSelectedOptionIdx]) ? plan.options[window.currentSelectedOptionIdx] : { name: '', price: 0 };
+      const activeGiftsList = window.getPlanOptionGifts(plan, window.currentSelectedOptionIdx);
       const mCount = window.currentSelectedMonth;
       const actDate = window.getLocalTodayDateStr(0);
 
@@ -2927,7 +3276,7 @@
         tempBillTotal += mFee;
 
         let mGift = 0;
-        (plan.gifts || []).forEach(g => {
+        activeGiftsList.forEach(g => {
           const startM = g.month || 1;
           const endM = g.endMonth || (g.isMonthly ? 12 : startM);
           if (g.isMonthly) {
@@ -3001,7 +3350,7 @@
         let monthGift = 0;
         let giftListThisMonth = [];
 
-        (plan.gifts || []).forEach(g => {
+        activeGiftsList.forEach(g => {
           const startM = g.month || 1;
           const endM = g.endMonth || (g.isMonthly ? 12 : startM);
           if (g.isMonthly) {
@@ -3036,7 +3385,7 @@
       document.getElementById("calcPeriodText").innerText = `${mCount}개월 (${window.getMonthLabel(actDate, 1)} ~ ${window.getMonthLabel(actDate, mCount)})`;
       document.getElementById("calcTotalBill").innerText = `${window.fmt(totalBill)}원`;
       document.getElementById("calcTotalGiftsVal").innerText = `${window.fmt(totalGiftsVal)}원`;
-      document.getElementById("calcGiftsSummary").innerText = (plan.gifts || []).map(g => `${g.name}(${window.getMonthLabel(actDate, g.month)})`).join(', ');
+      document.getElementById("calcGiftsSummary").innerText = activeGiftsList.map(g => `${g.name}(${window.getMonthLabel(actDate, g.month)})`).join(', ');
       
       const netTotalEl = document.getElementById("calcNetTotal");
       if (netTotal >= 0) {
@@ -3117,13 +3466,15 @@
         document.getElementById("formEventUrl").value = plan.eventUrl || "";
         document.getElementById("formNotices").value = (plan.notices || []).join('\n');
 
-        const firstOpt = (plan.options && plan.options[0]) ? plan.options[0] : { name: "", price: "" };
-        window.addFormOptionRow(firstOpt.name, firstOpt.price);
-        (plan.gifts || []).forEach(g => {
-          const startOffset = Math.max(0, (g.month || 1) - 1);
-          const duration = Math.max(1, ((g.endMonth || g.month || 1) - (g.month || 1)) + 1);
-          window.addFormGiftRow(g.name, g.cond, g.val, startOffset, duration, g.isMonthly, g.receiveDay || "");
+        const opts = (plan.options && plan.options.length > 0) ? plan.options : [{ name: "", price: "" }];
+        opts.forEach((o, idx) => {
+          const optGifts = (Array.isArray(o.gifts) && o.gifts.length > 0)
+            ? o.gifts
+            : (idx === 0 && Array.isArray(plan.gifts) ? plan.gifts : []);
+          window.addFormOptionRow(o.name, o.price, optGifts);
         });
+        const legacySec = document.getElementById("legacyCommonGiftsSection");
+        if (legacySec) legacySec.classList.add("hidden");
       } else {
         document.getElementById("modalHeaderTitle").innerText = "새 요금제 추가";
         window.setCarrierValueToForm("헬로모바일");
@@ -3131,7 +3482,9 @@
         document.getElementById("formStartDate").value = today;
         document.getElementById("formEndDate").value = today;
         document.getElementById("formActivationDate").value = today;
-        window.addFormOptionRow("", "");
+        const legacySec = document.getElementById("legacyCommonGiftsSection");
+        if (legacySec) legacySec.classList.add("hidden");
+        window.addFormOptionRow("", "", []);
       }
 
       document.getElementById("planModal").classList.remove("hidden");
@@ -3141,17 +3494,102 @@
       document.getElementById("planModal").classList.add("hidden");
     }
 
-    window.addFormOptionRow = function(name = "", price = "") {
+    window.createOptionGiftRowHtml = function(name = "", cond = "", val = "", startOffset = 0, durationMonths = 1, isMonthly = false, receiveDay = "") {
+      return `
+        <div class="bg-slate-50 p-2.5 border border-slate-200 rounded-xl space-y-1.5 opt-gift-row">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <input type="text" placeholder="사은품 명칭" value="${name}" class="gift-name flex-1 min-w-0 p-1.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 text-[11px]">
+            <input type="number" placeholder="가치(원)" value="${val}" class="gift-val w-24 shrink-0 p-1.5 bg-white border border-slate-300 rounded-lg font-bold text-orange-600 text-[11px]">
+            <button type="button" onclick="this.closest('.opt-gift-row').remove()" class="text-rose-500 hover:text-rose-700 px-1 shrink-0"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px] flex-wrap">
+            <input type="text" placeholder="지급 조건 설명" value="${cond}" class="gift-cond flex-1 min-w-[95px] p-1 bg-white border border-slate-300 rounded-lg">
+            <div class="flex items-center gap-0.5 shrink-0">
+              <span class="text-slate-500 font-bold">매월</span>
+              <input type="number" min="1" max="31" placeholder="일" value="${receiveDay}" class="gift-receive-day w-10 p-0.5 bg-emerald-50/80 border border-emerald-300 rounded text-center font-black text-emerald-700">
+              <span class="text-slate-500 font-bold">일</span>
+            </div>
+            <div class="flex items-center gap-0.5 shrink-0">
+              <span class="text-slate-500 font-bold">M+</span>
+              <input type="number" min="0" max="24" value="${startOffset}" class="gift-start-offset w-9 p-0.5 bg-white border border-slate-300 rounded text-center font-black text-orange-600">
+            </div>
+            <div class="flex items-center gap-0.5 shrink-0">
+              <input type="number" min="1" max="24" value="${durationMonths}" class="gift-duration w-9 p-0.5 bg-white border border-slate-300 rounded text-center font-black text-orange-600">
+              <span class="text-slate-500 font-bold">개월간</span>
+            </div>
+            <label class="flex items-center gap-1 font-bold text-slate-700 shrink-0 cursor-pointer">
+              <input type="checkbox" class="gift-monthly accent-orange-600 rounded" ${isMonthly ? 'checked' : ''}> 매월지급
+            </label>
+          </div>
+        </div>
+      `;
+    };
+
+    window.addOptionGiftItem = function(btn) {
+      const optCard = btn.closest(".option-row");
+      if (!optCard) return;
+      const listContainer = optCard.querySelector(".opt-gifts-list");
+      if (!listContainer) return;
+      const emptyHint = listContainer.querySelector(".opt-gifts-empty");
+      if (emptyHint) emptyHint.remove();
+      listContainer.insertAdjacentHTML("beforeend", window.createOptionGiftRowHtml());
+    };
+
+    window.addFormOptionRow = function(name = "", price = "", optionGifts = null) {
       if (!window.isAdminMode) return;
       const container = document.getElementById("formOptionsContainer");
-      container.innerHTML = "";
+      const existingRows = container.querySelectorAll(".option-row");
+      if (existingRows.length === 1) {
+        const firstName = existingRows[0].querySelector(".opt-name").value.trim();
+        const firstPrice = existingRows[0].querySelector(".opt-price").value.trim();
+        if (!firstName && !firstPrice && name) {
+          existingRows[0].querySelector(".opt-name").value = name;
+          existingRows[0].querySelector(".opt-price").value = price;
+          return;
+        }
+      }
+
+      const giftsHtml = (Array.isArray(optionGifts) && optionGifts.length > 0)
+        ? optionGifts.map(g => {
+            const startOffset = Math.max(0, (g.month || 1) - 1);
+            const duration = Math.max(1, ((g.endMonth || g.month || 1) - (g.month || 1)) + 1);
+            return window.createOptionGiftRowHtml(g.name || "", g.cond || "", g.val || 0, startOffset, duration, !!g.isMonthly, g.receiveDay || "");
+          }).join("")
+        : `<div class="opt-gifts-empty text-[10px] text-slate-400 text-center py-1.5 bg-slate-50 rounded-lg border border-dashed border-slate-200">이 요금제에 지급되는 사은품을 추가하세요.</div>`;
+
       const div = document.createElement("div");
-      div.className = "flex items-center gap-2 option-row";
+      div.className = "bg-white p-3 border border-slate-300 rounded-2xl space-y-2.5 option-row shadow-2xs";
       div.innerHTML = `
-        <input type="text" placeholder="요금제명 (예: LTE안심 5GB+)" value="${name}" required class="opt-name flex-1 min-w-0 p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold">
-        <input type="number" placeholder="월요금(원)" value="${price}" required class="opt-price w-28 sm:w-32 shrink-0 p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-orange-600">
+        <div class="flex items-center gap-1.5">
+          <input type="text" placeholder="요금제명 (예: LTE안심 5GB+)" value="${name}" required class="opt-name flex-1 min-w-0 p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900">
+          <input type="number" placeholder="월요금(원)" value="${price}" required class="opt-price w-24 sm:w-28 shrink-0 p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-black text-orange-600">
+          <button type="button" onclick="removeFormOptionRow(this)" title="요금제 삭제" class="w-8 h-8 shrink-0 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+        </div>
+        <div class="pt-2 border-t border-slate-100 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-emerald-800 flex items-center gap-1"><i class="fa-solid fa-gift text-orange-500"></i> 이 요금제 전용 사은품</span>
+            <button type="button" onclick="addOptionGiftItem(this)" class="px-2 py-0.5 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 rounded-lg font-bold text-[10px] transition">+ 사은품 추가</button>
+          </div>
+          <div class="opt-gifts-list space-y-1.5">${giftsHtml}</div>
+        </div>
       `;
       container.appendChild(div);
+    }
+
+    window.removeFormOptionRow = function(btn) {
+      const container = document.getElementById("formOptionsContainer");
+      if (!container) return;
+      if (container.querySelectorAll(".option-row").length <= 1) {
+        const row = btn.closest(".option-row");
+        if (row) {
+          row.querySelector(".opt-name").value = "";
+          row.querySelector(".opt-price").value = "";
+          const gl = row.querySelector(".opt-gifts-list");
+          if (gl) gl.innerHTML = `<div class="opt-gifts-empty text-[10px] text-slate-400 text-center py-1.5 bg-slate-50 rounded-lg border border-dashed border-slate-200">이 요금제에 지급되는 사은품을 추가하세요.</div>`;
+        }
+        return;
+      }
+      btn.closest(".option-row").remove();
     }
 
     window.addFormGiftRow = function(name = "", cond = "", val = "", startOffset = 0, durationMonths = 1, isMonthly = false, receiveDay = "") {
@@ -3198,33 +3636,39 @@
       if (!window.isAdminMode) return;
       const editId = document.getElementById("formEditId").value;
 
+      const parseGiftContainerRows = (rootEl, selector) => {
+        const rows = rootEl.querySelectorAll(selector);
+        const list = [];
+        rows.forEach(r => {
+          const name = r.querySelector(".gift-name").value.trim();
+          const val = parseInt(r.querySelector(".gift-val").value, 10) || 0;
+          const cond = r.querySelector(".gift-cond").value.trim();
+          const receiveDayRaw = parseInt(r.querySelector(".gift-receive-day").value, 10);
+          const receiveDay = (!isNaN(receiveDayRaw) && receiveDayRaw >= 1 && receiveDayRaw <= 31) ? receiveDayRaw : "";
+          const startOffset = parseInt(r.querySelector(".gift-start-offset").value, 10) || 0;
+          const durationMonths = parseInt(r.querySelector(".gift-duration").value, 10) || 1;
+          const isMonthly = r.querySelector(".gift-monthly").checked;
+
+          const startMonth = startOffset + 1;
+          const endMonth = startMonth + durationMonths - 1;
+
+          if (name) {
+            list.push({ name, cond, val, month: startMonth, endMonth: endMonth, isMonthly, receiveDay });
+          }
+        });
+        return list;
+      };
+
       const optRows = document.querySelectorAll(".option-row");
       const options = [];
       optRows.forEach(r => {
         const name = r.querySelector(".opt-name").value.trim();
         const price = parseInt(r.querySelector(".opt-price").value, 10) || 0;
-        if (name) options.push({ name, price });
+        const optGifts = parseGiftContainerRows(r, ".opt-gift-row");
+        if (name) options.push({ name, price, gifts: optGifts });
       });
 
-      const giftRows = document.querySelectorAll(".gift-row");
-      const gifts = [];
-      giftRows.forEach(r => {
-        const name = r.querySelector(".gift-name").value.trim();
-        const val = parseInt(r.querySelector(".gift-val").value, 10) || 0;
-        const cond = r.querySelector(".gift-cond").value.trim();
-        const receiveDayRaw = parseInt(r.querySelector(".gift-receive-day").value, 10);
-        const receiveDay = (!isNaN(receiveDayRaw) && receiveDayRaw >= 1 && receiveDayRaw <= 31) ? receiveDayRaw : "";
-        const startOffset = parseInt(r.querySelector(".gift-start-offset").value, 10) || 0;
-        const durationMonths = parseInt(r.querySelector(".gift-duration").value, 10) || 1;
-        const isMonthly = r.querySelector(".gift-monthly").checked;
-
-        const startMonth = startOffset + 1;
-        const endMonth = startMonth + durationMonths - 1;
-
-        if (name) {
-          gifts.push({ name, cond, val, month: startMonth, endMonth: endMonth, isMonthly, receiveDay });
-        }
-      });
+      const primaryGifts = (options.length > 0 && options[0].gifts) ? options[0].gifts : [];
 
       const noticesStr = document.getElementById("formNotices").value.trim();
       const notices = noticesStr ? noticesStr.split('\n').filter(n => n.trim()) : [];
@@ -3241,8 +3685,8 @@
         eventEndDate: document.getElementById("formEndDate").value || new Date().toISOString().slice(0, 10),
         activationDate: document.getElementById("formActivationDate").value || new Date().toISOString().slice(0, 10),
         eventUrl: document.getElementById("formEventUrl").value.trim(),
-        options: options.length > 0 ? options : [{ name: '기본 요금제', price: 0 }],
-        gifts: gifts,
+        options: options.length > 0 ? options : [{ name: '기본 요금제', price: 0, gifts: [] }],
+        gifts: primaryGifts,
         notices: notices,
         status: currentStatus
       };
@@ -3373,6 +3817,7 @@
       await loadStorage();
       renderMainList();
       initVisitorCounter();
+      scheduleNineAmGiftAlarm();
     }
 
     if (document.readyState === "loading") {
